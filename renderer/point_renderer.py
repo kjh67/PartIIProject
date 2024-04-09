@@ -1,17 +1,17 @@
 from OpenGL.GL import *
-from renderer import Renderer
-from gauss_utils import load_gaussians
+from renderer.renderer_template import Renderer
+from renderer.gauss_utils import Gaussians
 import numpy as np
 
 
 class PointRenderer(Renderer):
-    vshader = "./game/point_vert.glsl"
-    fshader = "./game/point_frag.glsl"
+    vshader = "./renderer/point_vert.glsl"
+    fshader = "./renderer/point_frag.glsl"
     
     def __init__(self, filepath, sc_width, sc_height, mvp_matrix):
 
         # load gaussians from .ply file
-        self.gaussians = load_gaussians(filepath)
+        self.gaussians = Gaussians.load_gaussians(filepath)
         self.sc_width = sc_width
         self.sc_height = sc_height
 

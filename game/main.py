@@ -5,10 +5,10 @@ import os
 from threading import Thread
 from threading import Event as ThreadEvent
 
-from PartIIProject.renderer.gauss_renderer import GaussianRenderer
-from PartIIProject.renderer.point_renderer import PointRenderer
+from renderer.gauss_renderer import GaussianRenderer
+from renderer.point_renderer import PointRenderer
 
-from colmap_data_utils import generate_model_matrix
+from game.colmap_data_utils import generate_model_matrix
 
 def rotate_x(theta):
     return np.array([[1,0,0,0],
@@ -226,4 +226,4 @@ def mainloop_gauss(filename, colmap_path):
 
 if __name__ == "__main__":
     #mainloop_point("C:/Users/kirst/Downloads/point_cloud(7).ply")
-    mainloop_gauss("C:/Users/kirst/Downloads/point_cloud(7).ply", ".")
+    mainloop_gauss("C:/Users/kirst/Downloads/point_cloud(7).ply", "..")

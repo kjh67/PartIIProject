@@ -1,12 +1,12 @@
 from OpenGL.GL import *
-from renderer import Renderer
-from gauss_utils import Gaussians
+from renderer.renderer_template import Renderer
+from renderer.gauss_utils import Gaussians
 import numpy as np
 
 
 class GaussianRenderer(Renderer):
-    vshader = "./game/gauss_vert.glsl"
-    fshader = "./game/gauss_frag.glsl"
+    vshader = "./renderer/gauss_vert.glsl"
+    fshader = "./renderer/gauss_frag.glsl"
     
     def __init__(self, filepath, sc_width, sc_height, mv_matrix, projection_matrix):
 
