@@ -29,7 +29,7 @@ def directory_setup(src, tgt):
     
     # 2. set up colmap output folder, including empty database and sparse folder
     os.makedirs(os.path.join(tgt, "colmap_output/sparse"))
-    os.mknod(os.path.join(tgt, "colmap_output", "database.db"))
+    with open(os.path.join(tgt, "colmap_output", "database.db")) as _: pass
 
     # 3. set up splatting output folder
     os.mkdir(os.path.join(tgt, "model_output"))
