@@ -137,7 +137,7 @@ def process_colmap(image_dir, target_dir, vocabtree_location="./nvs_from_video/v
     print("COLMAP processing complete")
 
 
-def run_preprocessing(src, tgt, frame_sample_period=30, frames_exist=False):
+def run_preprocessing(src, tgt, frames_exist=False, frame_sample_period=30):
     # check whether a colmap dataset already exists for this set of parameters
     
     try:
