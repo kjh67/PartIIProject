@@ -1,14 +1,17 @@
 import pygame
-from OpenGL.GL import *
 import numpy as np
-import os
-from threading import Thread
-from threading import Event as ThreadEvent
+import argparse
+
+from OpenGL.GL import glWindowPos2d, glDrawPixels
+from OpenGL.GL import GL_RGBA, GL_UNSIGNED_BYTE, GL_CONTEXT_FLAG_DEBUG_BIT_KHR
+from threading import Thread, Event as ThreadEvent
+from copy import deepcopy
 
 from renderer.gauss_renderer import GaussianRenderer
 from renderer.point_renderer import PointRenderer
-
+from game.player_camera import PlayerCamera
 from game.colmap_data_utils import generate_model_matrix
+
 
 def rotate_x(theta):
     return np.array([[1,0,0,0],
@@ -28,6 +31,7 @@ def rotate_z(theta):
                     [0,0,1,0],
                     [0,0,0,1]])
 
+
 def mainloop_point(filename):
     pygame.init()
     pygame.display.gl_set_attribute(GL_CONTEXT_FLAG_DEBUG_BIT_KHR, True)
@@ -38,40 +42,17 @@ def mainloop_point(filename):
     # translate -5 in x
     translation_matrix = np.array([[1,0,0,0],[0,1,0,0],[0,0,1,-3],[0,0,0,1]]).astype(np.float32)
 
-    znear = 0.2
-    zfar = 200
-
-    w = 2*0.11547
-    h = 2*0.0866
-    projection_matrix = np.array([[2*znear/w,0,0,0],[0,2*znear/h,0,0],[0,0,-((zfar+znear)/(zfar-znear)),-2*((zfar*znear)/(zfar-znear))],[0,0,-1,0]])
-    
-    
-    # for this equation: h and w are of the actual canvas, fx and fy are camera FOVs (div by 2)
-    # w = 800
-    # h = 600
-    # fy = 724
-    # fx = 692
-    # projection_matrix = np.array([[2*fx/w, 0, 0, 0],[0, 2*fy/h,0,0],[0,0,zfar/(zfar-znear),1],[0,0,-(zfar*znear)/(zfar-znear),0]])
-
-    # basic proj matrix, cancels out z
-    #projection_matrix = np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,1,0]])
-
-    mvp = np.matmul(projection_matrix, translation_matrix).astype(np.float32)
-    #mvp = view_matrix
-
-
-    renderer = PointRenderer(filename, 800, 600, mvp)
+    renderer = PointRenderer(filename, 800, 600, translation_matrix)
     renderer.render()
     pygame.display.flip()
-    pygame.time.wait(30)
     xrot = rotate_x(0)
     yrot = rotate_y(0)
     zrot = rotate_z(0)
 
     while True:
         rotation_matrix = np.matmul(zrot, np.matmul(yrot, xrot))
-        mvp = np.matmul(projection_matrix, np.matmul(translation_matrix, rotation_matrix))
-        renderer.update_mvp(mvp)
+        mv = np.matmul(translation_matrix, rotation_matrix)
+        renderer.update_modelview(mv)
         renderer.render()
         pygame.display.flip()
         pygame.time.wait(30)
@@ -82,13 +63,13 @@ def mainloop_point(filename):
                 pygame.quit()
                 quit()
         if keyspressed[pygame.K_i]:
-            xrot = np.matmul(xrot, rotate_x(5))
+            xrot = np.matmul(xrot, rotate_x(0.1))
         if keyspressed[pygame.K_k]:
-            xrot = np.matmul(xrot, rotate_x(-5))
+            xrot = np.matmul(xrot, rotate_x(-0.1))
         if keyspressed[pygame.K_j]:
-            yrot = np.matmul(yrot,rotate_y(5))
+            yrot = np.matmul(yrot,rotate_y(0.1))
         if keyspressed[pygame.K_l]:
-            yrot = np.matmul(yrot,rotate_y(-5))
+            yrot = np.matmul(yrot,rotate_y(-0.1))
 
         # only rotations and moving camera to/away from 0,0
         if keyspressed[pygame.K_w]:
@@ -97,9 +78,8 @@ def mainloop_point(filename):
             translation_matrix += np.array([[0,0,0,0],[0,0,0,0],[0,0,0,-0.1],[0,0,0,0]])
 
 
-
-def mainloop_gauss(filename, colmap_path):
-    screensize = (800,600)
+def mainloop_gauss(filename, colmap_path=None, points=False):
+    screensize = (800, 600)
 
     # pygame setup
     pygame.init()
@@ -113,23 +93,20 @@ def mainloop_gauss(filename, colmap_path):
     display_fps = False
 
     # attempt to generate model matrix from COLMAP data
-    try:
-        model_matrix = generate_model_matrix(os.path.join(colmap_path, "images.bin"))
-    except FileExistsError:
+    if colmap_path:
+        try:
+            model_matrix = generate_model_matrix(colmap_path)
+        except FileExistsError:
+            model_matrix = np.identity(4)
+    else:
         model_matrix = np.identity(4)
-
-    # get projection matrix (TODO: MOVE TO RENDERER)
-    znear = 0.2
-    zfar = 200
-    w = 2*0.11547
-    h = 2*0.0866
-    # htany = np.tan(np.deg2rad(22.5))
-    # htanx = htany * w / h
-    #projection_matrix = np.array([[1/htanx,0,0,0],[0,1/htany,0,0],[0,0,(zfar/(zfar-znear)),-2*((zfar*znear)/(zfar-znear))],[0,0,-1,0]])
-    projection_matrix = np.array([[2*znear/w,0,0,0],[0,2*znear/h,0,0],[0,0,-((zfar+znear)/(zfar-znear)),-2*((zfar*znear)/(zfar-znear))],[0,0,-1,0]])
+    #model_matrix = np.identity(4)
 
     # initialise renderer
-    renderer = GaussianRenderer(filename, *screensize, model_matrix, projection_matrix)
+    if not points:
+        renderer = GaussianRenderer(filename, *screensize, model_matrix)
+    else:
+        renderer = PointRenderer(filename, *screensize, model_matrix)
 
     # set up gaussian sorting in the background - use event to signal to the main loop when a sort has been completed
     gaussians_updated = ThreadEvent()
@@ -144,31 +121,25 @@ def mainloop_gauss(filename, colmap_path):
     fps_clock = pygame.time.Clock()
     fps_clock.tick()
 
-    # set up matrices
-    translation_matrix = np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]]).astype(np.float32)
-    model_rotation_matrix = np.identity(4)
-    view_rotation_matrix = np.identity(4)
-    view_matrix = np.identity(4)
-    modelview_matrix = np.matmul(translation_matrix, model_matrix)
+    # Instantiate player camera, which will handle all movement and model/view matrices
+    camera = PlayerCamera(model_matrix)
 
-    # start the sorting thread before entering main loop
+    # start the sorting thread before entering main game loop
     sorter.start()
 
     while True:
-        # check for a completed sort, update renderer state if necessary
+        # Check for a completed Gaussian sort, and update renderer state if necessary
         if gaussians_updated.is_set():
             renderer.update_buffered_state()
             gaussians_updated.clear()
-        
-        # compute transformation matrices, do rendering
-        model_matrix_delta = np.matmul(model_rotation_matrix, translation_matrix)
-        model_matrix = np.matmul(model_matrix_delta, model_matrix)
-        view_matrix = np.matmul(view_rotation_matrix, view_matrix)
-        modelview_matrix = np.matmul(view_matrix, model_matrix)
-        renderer.update_modelview(modelview_matrix)
+
+        #global_rotation = np.linalg.inv(view_matrix)
+
+        #renderer.update_global_rotation(global_rotation[:3,:3])
+        renderer.update_modelview(camera.get_modelview())
         renderer.render()
 
-        # draw fps counter on the screen (white text on black background)
+        # Draw fps counter on the screen
         if display_fps:
             text_surface = display_font.render(f"{str(fps_clock.get_fps())[:5]}", False, (255,255,255,255), (0,0,0, 255))
             text_data = pygame.image.tostring(text_surface, "RGBA", True)
@@ -178,11 +149,10 @@ def mainloop_gauss(filename, colmap_path):
         # switch double buffered displays
         pygame.display.flip()
 
-        # calculate time since last frame, and print fps
+        # calculate time since last frame
         t_delta = fps_clock.tick()
-        #t_delta = 10
-
-        # take user input
+        
+        # Deal with user input for game settings, quitting etc
         keyspressed = pygame.key.get_pressed()
         for event in pygame.event.get():
             if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_x):
@@ -192,38 +162,27 @@ def mainloop_gauss(filename, colmap_path):
             elif (event.type == pygame.KEYDOWN and event.key == pygame.K_f):
                 display_fps = not display_fps
 
+            elif (event.type == pygame.KEYDOWN and event.key == pygame.K_0):
+                renderer.save_frame("./TESTIMAGE.jpg")
 
-        # # x axis is across the screen
-        # if keyspressed[pygame.K_i]:
-        #     xrot = np.matmul(xrot, rotate_x(t_delta*np.pi/2000))
-        # if keyspressed[pygame.K_k]:
-        #     xrot = np.matmul(xrot, rotate_x(t_delta*np.pi/2000))
-        # y axis is vertical
-
-        if keyspressed[pygame.K_i]:
-            view_rotation_matrix = rotate_x(t_delta/1500)
-        elif keyspressed[pygame.K_k]:
-            view_rotation_matrix = rotate_x(-t_delta/1500)
-        else:
-            view_rotation_matrix = np.identity(4)
-
-        # turning left/right
-        if keyspressed[pygame.K_j]:
-            model_rotation_matrix = rotate_y(t_delta/1500)
-        elif keyspressed[pygame.K_l]:
-            model_rotation_matrix = rotate_y(-t_delta/1500)
-        else:
-            model_rotation_matrix = np.identity(4)
-            
-        # forwards/backwards movement
-        if keyspressed[pygame.K_w]:
-            translation_matrix = np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0.001*t_delta],[0,0,0,1]])
-        elif keyspressed[pygame.K_s]:
-            translation_matrix = np.array([[1,0,0,0],[0,1,0,0],[0,0,1,-0.001*t_delta],[0,0,0,1]])
-        else:
-            translation_matrix = np.identity(4)
+        # Update camera position etc with other user input
+        camera.update(keyspressed, t_delta)
 
 
 if __name__ == "__main__":
-    #mainloop_point("C:/Users/kirst/Downloads/point_cloud(7).ply")
-    mainloop_gauss("C:/Users/kirst/Downloads/point_cloud(7).ply", "..")
+    parser = argparse.ArgumentParser()
+    parser.add_argument('render_source', type=str, help="Path to .ply file containing splats")
+    parser.add_argument('-c', '--colmap_cams_path', type=str, help="Optional path to cameras.bin generated by COLMAP", default=None)
+    parser.add_argument('-p', '--points', action='store_true')
+
+    args = parser.parse_args()
+
+    if args.points:
+        mainloop_point(args.render_source)
+    else:
+        mainloop_gauss(args.render_source, args.colmap_cams_path)
+
+    #mainloop_point("C:/Users/kirst/Downloads/point_cloud(12).ply")
+    #mainloop_gauss("C:/Users/kirst/Downloads/point_cloud(12).ply", "C:/Users/kirst/Downloads/images.bin")
+    #mainloop_gauss("C:/Users/kirst/Downloads/point_cloud(11).ply", "../images.bin")
+    #mainloop_gauss("C:/Users/kirst/Downloads/point_cloud(15).ply", "C:/Users/kirst/Downloads/images(1).bin")
