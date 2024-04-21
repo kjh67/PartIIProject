@@ -22,13 +22,13 @@ def directory_setup(src, tgt):
         # get the source directory name, create a target called NAME_output
         tgt = os.path.join(os.path.dirname(src), os.path.basename(src)+'_output')
     if not os.path.exists(tgt):
-        os.mkdirs(tgt)
+        os.makedirs(tgt)
 
     # 1. set up frame extraction folder
     os.mkdir(os.path.join(tgt, "frames"))
     
     # 2. set up colmap output folder, including empty database and sparse folder
-    os.mkdirs(os.path.join(tgt, "colmap_output/sparse"))
+    os.makedirs(os.path.join(tgt, "colmap_output/sparse"))
     os.mknod(os.path.join(tgt, "colmap_output", "database.db"))
 
     # 3. set up splatting output folder
