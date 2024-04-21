@@ -120,7 +120,7 @@ def process_colmap(image_dir, target_dir, vocabtree_location="./nvs_from_video/v
 
     # check to see whether a vocab tree is in the expected place; if so, add loop detection to the feature matching command
     if os.path.isfile(vocabtree_location):
-        feature_matching_command += ["--SequentialMatching.loop_detection", 1,
+        feature_matching_command += ["--SequentialMatching.loop_detection", "1",
                                        "--SequentialMatching.vocab_tree_path", vocabtree_location]
 
     feature_matching = subprocess.run(feature_matching_command)
@@ -131,7 +131,7 @@ def process_colmap(image_dir, target_dir, vocabtree_location="./nvs_from_video/v
                                           "--database_path", db_path,
                                           "--image_path", image_dir,
                                           "--output_path", os.path.join(target_dir,"sparse"),
-                                          "--Mapper.max_num_models", 1])
+                                          "--Mapper.max_num_models", "1"])
     stop_if_failed(incremental_mapping)
 
     print("COLMAP processing complete")
