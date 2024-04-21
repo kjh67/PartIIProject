@@ -137,7 +137,7 @@ def process_colmap(image_dir, target_dir, vocabtree_location="./nvs_from_video/v
     print("COLMAP processing complete")
 
 
-def run_preprocessing(src, tgt, frame_sample_period=30):
+def run_preprocessing(src, tgt, frame_sample_period=30, frames_exist=False):
     # check whether a colmap dataset already exists for this set of parameters
     
     try:
@@ -145,16 +145,19 @@ def run_preprocessing(src, tgt, frame_sample_period=30):
     except DirectorySetupError as e:
         print(e.message)
         quit(code=1)
+    except FileExistsError as e:
+        print("Filespace previously set up")
 
     # extract frames into new folder
-    try:
-        extract_frames(src, os.path.join(tgt, "frames"), frame_sample_period)
-    except FileExistsError as f:
-        print("Failed to extract frames from video")
-        quit(code=1)
+    if not frames_exist:
+        try:
+            extract_frames(src, os.path.join(tgt, "frames"), frame_sample_period)
+        except FileExistsError as f:
+            print("Failed to extract frames from video")
+            quit(code=1)
 
     # run colmap, placing output in the folder set up earlier
     # check whether colmap already run for this dataset
-    process_colmap(src, os.path.join(tgt, "colmap_output"))
+    process_colmap(os.path.join(tgt, "frames"), os.path.join(tgt, "colmap_output"))
 
     return tgt
