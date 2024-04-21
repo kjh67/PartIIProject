@@ -17,8 +17,7 @@ void main() {
 	float power = -0.5 * (gauss_conic.x * d.x * d.x + gauss_conic.z * d.y * d.y) - gauss_conic.y * d.x * d.y;
 	if (power > 0.0) discard;
 	float alpha = min(0.99, gauss_opacity * exp(power));
-	if(alpha < 5./255.) discard;
+	if(alpha < 20./255.) discard;
 
 	gl_FragColor = vec4(gauss_colour, alpha); // multiply gauss_colour by alpha if need be
-
 }

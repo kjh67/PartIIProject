@@ -14,8 +14,11 @@ in vec2 position;
 //Uniform inputs
 uniform mat4 projection;
 uniform mat4 view;
+uniform vec2 tanfovxy;
 uniform vec2 focal;
 uniform vec2 viewport;
+
+uniform mat3 global_rotation;
 
 // Outputs to the fragment shader, per vertex
 out vec2 gauss_center;
@@ -48,16 +51,21 @@ out float gauss_opacity;
 mat3 compute_covariance_3D() {
     mat3 S = mat3(scale.x, 0, 0, 0, scale.y, 0, 0, 0, scale.z);
     
-    float q0 = rotation.x;
-    float q1 = rotation.y;
-    float q2 = rotation.z;
-    float q3 = rotation.w;
+    vec4 norm_rot = rotation;// / normalize(rotation);
+
+    float q0 = norm_rot.x;
+    float q1 = norm_rot.y;
+    float q2 = norm_rot.z;
+    float q3 = norm_rot.w;
     // R calculated using formula from wikipedia
-    mat3 R = mat3(
-        1 - 2*(q2*q2 + q3*q3), 2*(q1*q2 - q0*q3), 2*(q1*q3 + q0*q2),\
-        2*(q1*q2 + q0*q3), 1 - 2*(q1*q1 + q3*q3), 2*(q2*q3 - q0*q1),\
-        2*(q1*q3 - q0*q2), 2*(q2*q3 + q0*q1), 1 - 2*(q0*q0 + q1*q1)\
+    mat3 R_0 = mat3(
+        1 - 2*(q2*q2 + q3*q3), 2*(q1*q2 - q0*q3), 2*(q1*q3 + q0*q2),
+        2*(q1*q2 + q0*q3), 1 - 2*(q1*q1 + q3*q3), 2*(q2*q3 - q0*q1),
+        2*(q1*q3 - q0*q2), 2*(q2*q3 + q0*q1), 1 - 2*(q1*q1 + q2*q2)
     );
+
+    // ADJUST GAUSSIAN ROTATION ACCORDING TO MODEL ROTATION
+    mat3 R = global_rotation * R_0;
 
     // sigma calculated using equation given in paper
     mat3 sigma = transpose(R) * transpose(S) * S * R;
@@ -73,7 +81,8 @@ vec3 compute_covariance_2D() {
     float tx_tz = t.x / t.z;
     float ty_tz = t.y / t.z;
 
-    vec2 limits = 1.3 * 0.5 * viewport / focal;
+    // should be 1.3 times tanfovx/y
+    vec2 limits = 1.3 * tanfovxy;
     t.x = min(limits.x, max(-limits.x, tx_tz)) * t.z;
     t.y = min(limits.y, max(-limits.y, ty_tz)) * t.z;
 
@@ -82,11 +91,15 @@ vec3 compute_covariance_2D() {
         0.0, focal.y / t.z, -(focal.y * t.y) / (t.z*t.z),
         0.0,0.0,0.0
     );
-    mat3 W = transpose(mat3(view));
+    //mat3 W = transpose(mat3(view));
+    mat3 W = mat3(view[0][0], view[1][0], view[2][0], 
+                  view[0][1], view[1][1], view[2][1],
+                  view[0][2], view[1][2], view[2][2]);
+
     mat3 T = W * J;
 
     mat3 cov3D = compute_covariance_3D();
-    // Equation 31 from the paper
+    // Equation 31 from the papers
     mat3 cov2D = transpose(T) * transpose(cov3D) * T;
 
     return vec3(cov2D[0][0] + 0.3, cov2D[0][1], cov2D[1][1] + 0.3);
@@ -135,7 +148,7 @@ vec3 colour_from_harmonics() {
 
 void main() {
     vec4 camspace = view * vec4(center, 1);
-    // OpenGL uses a right-handed rather than left-handed coordinate system
+    // OpenGL uses a right-handed rather than left-handed coordinate system; flip the z axis direction
     vec4 pos2d = projection * mat4(-1,0,0,0,0,-1,0,0,0,0,1,0,0,0,0,1) * camspace;
     
     vec3 cov2D = compute_covariance_2D();

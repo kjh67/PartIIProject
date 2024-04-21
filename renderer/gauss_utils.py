@@ -40,7 +40,6 @@ class Gaussians:
 
         # start with basic RGB components only (only 3 values)
         shs = np.column_stack([*[plydata[f'f_dc_{n}'] for n in range(3)]])#, *[plydata[f'f_rest_{m}'] for m in range(9)]])
-        print(shs[0])
 
         # might need to exp scales, normalise rotations, sigmoid opacities
         # need to normalise the rots to get a valid unit quaternion
@@ -58,4 +57,4 @@ class Gaussians:
 
 if __name__ == "__main__":
     g = Gaussians.load_gaussians("C:/Users/kirst/Downloads/point_cloud(7).ply")
-    print(max(-g.position[:,0]))
+    #print(max(-g.position[:,0]))

@@ -1,38 +1,30 @@
-from OpenGL.GL import *
-from renderer.renderer_template import Renderer
-from renderer.gauss_utils import Gaussians
 import numpy as np
+
+# OpenGL commands
+from OpenGL.GL import glUseProgram, glHint, glEnable, glBlendFunc,\
+    glGenBuffers, glGetAttribLocation, glBindBuffer, glBufferData,\
+    glVertexAttribPointer, glEnableVertexAttribArray, glGenVertexArrays,\
+    glBindVertexArray, glGetUniformLocation, glUniformMatrix4fv,\
+    glClearColor, glClear, glDrawArrays
+# OpenGL enums
+from OpenGL.GL import GL_DEPTH_TEST, GL_BLEND, GL_SRC_ALPHA,\
+    GL_ONE_MINUS_SRC_ALPHA, GL_ARRAY_BUFFER, GL_FLOAT, GL_STATIC_DRAW,\
+    GL_COLOR_BUFFER_BIT, GL_NICEST, GL_TRUE, GL_POINT_SMOOTH_HINT,\
+    GL_POINT_SMOOTH, GL_VERTEX_PROGRAM_POINT_SIZE, GL_POINTS
+
+from renderer.renderer_template import Renderer
 
 
 class PointRenderer(Renderer):
     vshader = "./renderer/point_vert.glsl"
     fshader = "./renderer/point_frag.glsl"
     
-    def __init__(self, filepath, sc_width, sc_height, mvp_matrix):
+    def __init__(self, filepath, screenwidth, screenheight, mv_matrix, fovx=50, fovy=50, znear=0.2, zfar=200):
+        tanfovx = np.tan(np.deg2rad(fovx/2))
+        tanfovy = np.tan(np.deg2rad(fovy/2))
+        super().__init__(filepath, screenwidth, screenheight, mv_matrix, tanfovx, tanfovy, znear, zfar)
 
-        # load gaussians from .ply file
-        self.gaussians = Gaussians.load_gaussians(filepath)
-        self.sc_width = sc_width
-        self.sc_height = sc_height
-
-        glViewport(0,0,sc_width,sc_height)
-
-        self.program = glCreateProgram()
-
-        # load and compile shaders
-        self.vertex_shader = super().load_shader(GL_VERTEX_SHADER, self.vshader)
-        self.fragment_shader = super().load_shader(GL_FRAGMENT_SHADER, self.fshader)
-
-        # create GL program
-        glAttachShader(self.program, self.vertex_shader)
-        glAttachShader(self.program, self.fragment_shader)
-        glLinkProgram(self.program)
-
-        # check that the program linked without errors
-        if glGetProgramiv(self.program, GL_LINK_STATUS) == GL_FALSE:
-            print("Shader program linking failed")
-
-        # Use the shader program we linked
+        # Use the shader program we linked, set up OpenGL settings
         glUseProgram(self.program)
 
         glHint(GL_POINT_SMOOTH_HINT, GL_NICEST)
@@ -76,25 +68,41 @@ class PointRenderer(Renderer):
         glBindBuffer(GL_ARRAY_BUFFER, 0)
 
         # set up mvp matrix
-        self.mvp = mvp_matrix
+        self.mvp = np.matmul(self.projection_matrix, self.modelview_matrix)
         self.mvp_uniloc = glGetUniformLocation(self.program, "mvp")
         glUniformMatrix4fv(self.mvp_uniloc, 1, GL_TRUE, self.mvp)
 
 
-    def update_mvp(self, mvp_matrix):
+    def update_modelview(self, mv_matrix):
         glUseProgram(self.program)
         glBindVertexArray(self.vao)
-        self.mvp = mvp_matrix
-        glUniformMatrix4fv(self.mvp_uniloc, 1, GL_TRUE, mvp_matrix)
+        self.modelview_matrix = mv_matrix
+        self.mvp = np.matmul(self.projection_matrix, mv_matrix)
+        glUniformMatrix4fv(self.mvp_uniloc, 1, GL_TRUE, self.mvp)
 
+    def update_proj(self, proj_matrix):
+        glUseProgram(self.program)
+        glBindVertexArray(self.vao)
+        self.projection_matrix_matrix = proj_matrix
+        self.mvp = np.matmul(proj_matrix, self.modelview_matrix)
+        glUniformMatrix4fv(self.mvp_uniloc, 1, GL_TRUE, self.mvp)
+
+    def update_gaussian_rotation(self, gauss_rotation):
+        # Pass this method, since gaussians are points their rotation is irrelevant
+        pass
+
+    def sort_gaussians(self):
+        pass
+
+    def update_buffered_state(self):
+        pass
 
     def render(self):
-
-        # clear to a blank screen
+        # Clear viewport to blank
         glClearColor(0,0,0,0)
-        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
+        glClear(GL_COLOR_BUFFER_BIT)
 
-        # make sure bindings are correctly set up
+        # Bind shader program and draw each gaussian as a coloured point
         glUseProgram(self.program)
         glBindVertexArray(self.vao)
         glDrawArrays(GL_POINTS, 0, len(self.gaussians.position))

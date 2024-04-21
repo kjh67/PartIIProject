@@ -1,55 +1,41 @@
-from OpenGL.GL import *
-from renderer.renderer_template import Renderer
-from renderer.gauss_utils import Gaussians
 import numpy as np
+
+# OpenGL commands
+from OpenGL.GL import glUseProgram, glDisable, glEnable, glBlendFunc,\
+    glGenBuffers, glGetAttribLocation, glBindBuffer, glBufferData,\
+    glVertexAttribPointer, glEnableVertexAttribArray, glGenVertexArrays,\
+    glBindVertexArray, glVertexAttribDivisor, glGetUniformLocation,\
+    glUniformMatrix4fv, glUniform2fv, glUniformMatrix3fv, glClearColor,\
+    glClear, glDrawArraysInstanced
+# OpenGL enums
+from OpenGL.GL import GL_DEPTH_TEST, GL_BLEND, GL_SRC_ALPHA,\
+    GL_ONE_MINUS_SRC_ALPHA, GL_ARRAY_BUFFER, GL_FLOAT,\
+    GL_STATIC_DRAW, GL_COLOR_BUFFER_BIT, GL_TRIANGLE_STRIP,\
+    GL_TRUE
+
+from renderer.renderer_template import Renderer
 
 
 class GaussianRenderer(Renderer):
     vshader = "./renderer/gauss_vert.glsl"
     fshader = "./renderer/gauss_frag.glsl"
     
-    def __init__(self, filepath, sc_width, sc_height, mv_matrix, projection_matrix):
+    def __init__(self, filepath, screenwidth, screenheight, mv_matrix, fovx=50, fovy=50, znear=0.2, zfar=200):
+        tanfovx = np.tan(np.deg2rad(fovx/2))
+        tanfovy = np.tan(np.deg2rad(fovy/2))
+        super().__init__(filepath, screenwidth, screenheight, mv_matrix, tanfovx, tanfovy, znear, zfar)
 
-        # load gaussians from .ply file
-        self.gaussians = Gaussians.load_gaussians(filepath)
-
-        # set up attributes
-        self.sc_width = sc_width
-        self.sc_height = sc_height
-        self.modelview_matrix = mv_matrix
-        self.projection_matrix = projection_matrix
-
-        glViewport(0,0,sc_width,sc_height)
-
-        self.program = glCreateProgram()
-
-        # load and compile shaders
-        self.vertex_shader = super().load_shader(GL_VERTEX_SHADER, self.vshader)
-        self.fragment_shader = super().load_shader(GL_FRAGMENT_SHADER, self.fshader)
-
-        # create GL program
-        glAttachShader(self.program, self.vertex_shader)
-        glAttachShader(self.program, self.fragment_shader)
-        glLinkProgram(self.program)
-
-        # check that the program linked without errors
-        if glGetProgramiv(self.program, GL_LINK_STATUS) == GL_FALSE:
-            print("Shader program linking failed")
-
-        # Use the shader program we linked
+        # Specify shader program to use, and set up OpenGL environment
         glUseProgram(self.program)
-
-        # Set up render settings; turn off z-buffer testing, set up blending etc
         glDisable(GL_DEPTH_TEST)
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
-
-        # initialise vao
+        # Initialise Vertex Array Object; container for all buffers
         self.vao = glGenVertexArrays(1)
         glBindVertexArray(self.vao)
 
-        # set up vertices to be used each instance
+        # Set up vertices to be used each gaussian instance
         self.instance_vertices = np.array([1,-1,1,1,-1,1,-1,-1]).astype(np.float32)
         self.vertex_buffer = glGenBuffers(1)
         self.attribute_vertices = glGetAttribLocation(self.program, "position")
@@ -59,7 +45,7 @@ class GaussianRenderer(Renderer):
         glEnableVertexAttribArray(self.attribute_vertices)
 
 
-        # per-gaussian properties
+        # Per-gaussian properties
 
         # set up buffer for actual gaussian centers
         self.center_buffer = glGenBuffers(1)
@@ -92,7 +78,7 @@ class GaussianRenderer(Renderer):
         self.colour_buffer = glGenBuffers(1)
         self.attribute_colour = glGetAttribLocation(self.program, "shs")
         glBindBuffer(GL_ARRAY_BUFFER, self.colour_buffer)
-        print(self.gaussians.sh[0])
+        #print(self.gaussians.sh[0])
         glBufferData(GL_ARRAY_BUFFER, self.gaussians.sh.flatten().nbytes, self.gaussians.sh.reshape(-1), GL_STATIC_DRAW)
         glVertexAttribPointer(self.attribute_colour, 3, GL_FLOAT, False, 0, None)
         glEnableVertexAttribArray(self.attribute_colour)
@@ -115,12 +101,19 @@ class GaussianRenderer(Renderer):
 
         self.uniform_view = glGetUniformLocation(self.program, "view")
         glUniformMatrix4fv(self.uniform_view, 1, True, self.modelview_matrix)
-        self.focal = np.array([self.sc_width/(2*(np.tan(np.deg2rad(22.5)))),self.sc_height/(2*(np.tan(np.deg2rad(30))))]).astype(np.float32)
+
+        self.uniform_tanfovxy = glGetUniformLocation(self.program, "tanfovxy")
+        glUniform2fv(self.uniform_tanfovxy, 1, self.tanfovxy)
+
         self.uniform_focal = glGetUniformLocation(self.program, "focal")
         glUniform2fv(self.uniform_focal, 1, self.focal)
 
         self.uniform_viewport = glGetUniformLocation(self.program, "viewport")
-        glUniform2fv(self.uniform_viewport, GL_ONE, np.array([sc_width, sc_height]).astype(np.float32))
+        glUniform2fv(self.uniform_viewport, 1, np.array([screenwidth, screenheight]).astype(np.float32))
+
+        # NEW: GLOBAL ROTATION
+        self.uniform_globalrotation = glGetUniformLocation(self.program, "global_rotation")
+        glUniformMatrix3fv(self.uniform_globalrotation, 1, True, np.identity(3))
 
 
     def sort_gaussians(self):
@@ -141,7 +134,7 @@ class GaussianRenderer(Renderer):
 
 
     def update_buffered_state(self):
-        # re-buffer all of the data
+        # Refresh buffers of all per-gaussian data, reflecting current depth in scene
         glBindBuffer(GL_ARRAY_BUFFER, self.center_buffer)
         glBufferData(GL_ARRAY_BUFFER, self.gaussians.position.nbytes, self.gaussians.position.reshape(-1), GL_STATIC_DRAW)
         glBindBuffer(GL_ARRAY_BUFFER, self.rotation_buffer)
@@ -152,7 +145,6 @@ class GaussianRenderer(Renderer):
         glBufferData(GL_ARRAY_BUFFER, self.gaussians.sh.flatten().nbytes, self.gaussians.sh.reshape(-1), GL_STATIC_DRAW)
         glBindBuffer(GL_ARRAY_BUFFER, self.opacity_buffer)
         glBufferData(GL_ARRAY_BUFFER, self.gaussians.opacity.nbytes, self.gaussians.opacity, GL_STATIC_DRAW)
-
 
     def update_proj(self, proj_matrix):
         glUseProgram(self.program)
@@ -166,15 +158,20 @@ class GaussianRenderer(Renderer):
         self.modelview_matrix = mv_matrix
         glUniformMatrix4fv(self.uniform_view, 1, GL_TRUE, mv_matrix)
 
+    def update_gaussian_rotation(self, global_rotation):
+        glUseProgram(self.program)
+        glBindVertexArray(self.vao)
+        glUniformMatrix3fv(self.uniform_globalrotation, 1, True, global_rotation)
+
 
     def render(self):
-        # clear to a blank screen
+        # Clear viewport
         glClearColor(0,0,0,0)
         glClear(GL_COLOR_BUFFER_BIT)
 
-        # make sure bindings are correctly set up
+        # Bind to shader program and VAO
         glUseProgram(self.program)
         glBindVertexArray(self.vao)
     
-        # Draw triangles
+        # Draw each gaussian as an instance of triangle geometry
         glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, len(self.gaussians.position))
