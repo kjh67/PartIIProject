@@ -40,7 +40,6 @@ def map_equi_pinhole(FOV, eq_width, eq_height, target_width, target_height, yaw,
 
     uc_points = np.array([*zip(xs, ys, zs)])
 
-    # put rotation stuff here
     # reshape before applying the rotation (need second shape to be 3)
     rot = calculate_rot_matrix(np.radians(yaw), np.radians(pitch))
     uc_points = np.dot(uc_points, rot.T)
