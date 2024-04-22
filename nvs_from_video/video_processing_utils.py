@@ -2,9 +2,13 @@ import os
 import cv2
 import subprocess
 import numpy as np
+import shutil
 
 from nvs_from_video.map_equi_pinhole import map_equi_pinhole
-from colmap.scripts.python.read_write_model import read_model, write_model
+from colmap.scripts.python.read_write_model \
+    import read_cameras_binary, write_cameras_binary, \
+        read_images_binary, write_images_binary, \
+        read_points3D_binary, write_points3D_binary
 
 
 class DirectorySetupError(Exception):
@@ -35,6 +39,76 @@ def directory_setup(src, tgt):
     os.mkdir(os.path.join(tgt, "model_output"))
 
     return tgt
+
+
+def retrieve_colmap_information(image_ids, all_images, all_cameras, all_points3D):
+    images = {}
+    cameras = {}
+    points3D = {}
+    image_names = []
+    for im_id in image_ids:
+        images[im_id] = all_images[im_id]
+        cam_id = images[im_id].camera_id
+        cameras[cam_id] = all_cameras[cam_id]
+        points3D_ids = images[im_id].point3D_ids
+        for point_id in points3D_ids:
+            points3D[point_id] = all_points3D[point_id]
+        image_names.append(images[im_id].name)
+    return images, cameras, points3D, image_names
+
+
+def train_test_split(source_directory, train_proportion=0.8):
+    """Takes an output directory, containing directories 'colmap_output' and 
+    'frames', and creates separate 'train' and 'test' directories"""
+
+    # Make directories: colmap_output/test/sparse/0, and colmap_output/train/sparse/0
+    source_colmap_directory = os.path.join(source_directory, "colmap_output", "sparse", "0")
+    train_colmap_directory = os.path.join(source_directory, "train", "colmap_output", "sparse", "0")
+    test_colmap_directory = os.path.join(source_directory, "test", "colmap_output", "sparse", "0")
+
+    os.makedirs(os.path.join(train_colmap_directory))
+    os.makedirs(os.path.join(test_colmap_directory))
+
+    # Get list of all COLMAPed images; returned as dictionaries
+    images = read_images_binary(os.path.join(source_colmap_directory, "images.bin"))
+    cameras = read_cameras_binary(os.path.join(source_colmap_directory, "cameras.bin"))
+    points3D = read_points3D_binary(os.path.join(source_colmap_directory, "points3D.bin"))
+
+    # Take a subset of shuffled images for training, and the rest for testing
+    image_ids_shuffled = np.shuffle(np.array(images.keys()))
+    train_image_ids = image_ids_shuffled[:int(len(image_ids_shuffled)*train_proportion)]
+    test_image_ids = image_ids_shuffled[int(len(image_ids_shuffled)*train_proportion):]
+
+    # Retrive the COLMAP information into dicts
+    train_images, train_cameras, train_points3D, train_image_names = retrieve_colmap_information(
+        train_image_ids, images, cameras, points3D
+    )
+    test_images, test_cameras, test_points3D, test_image_names = retrieve_colmap_information(
+        test_image_ids, images, cameras, points3D
+    )
+
+    # Write back information to relevant directories
+    write_images_binary(train_images, os.path.join(train_colmap_directory, "images.bin"))
+    write_images_binary(test_images, os.path.join(test_colmap_directory, "images.bin"))
+    write_cameras_binary(train_cameras, os.path.join(train_colmap_directory, "cameras.bin"))
+    write_cameras_binary(test_cameras, os.path.join(test_colmap_directory, "cameras.bin"))
+    write_points3D_binary(train_points3D, os.path.join(train_colmap_directory, "points3D.bin"))
+    write_points3D_binary(test_points3D, os.path.join(test_colmap_directory, "points3D.bin"))
+
+    # Copy images into test and train folders
+    source_image_directory = os.path.join(source_directory, "frames")
+    train_image_directory = os.path.join(source_directory, "train", "images")
+    test_image_directory = os.path.join(source_directory, "test", "images")
+
+    os.mkdir(train_image_directory)
+    os.mkdir(test_image_directory)
+
+    for image in train_image_names:
+        shutil.copy(os.path.join(source_image_directory, image), os.path.join(train_image_directory, image))
+    for image in test_image_names:
+        shutil.copy(os.path.join(source_image_directory, image), os.path.join(test_image_directory, image))
+
+    print("Training and testing datasets generated.")
 
 
 def get_next_video(src_list):
@@ -94,7 +168,7 @@ def extract_frames(src, tgt, frequency=30):
     print('Extraction complete')
 
 
-def process_colmap(image_dir, target_dir, vocabtree_location="./nvs_from_video/vocab_tree.bin"):
+def process_colmap(image_dir, target_dir, map_only=False, vocabtree_location="./nvs_from_video/vocab_tree.bin"):
     """src is the directory containing extracted frames; tgt is 
     the directory in which to output the COLMAP database and 
     reconstruction files"""
@@ -104,27 +178,27 @@ def process_colmap(image_dir, target_dir, vocabtree_location="./nvs_from_video/v
             print("COLMAP Processing failed")
             quit(code=1)
 
-
+    # assume that colmap has already been installed; call the functions as a subprocess rather than using the pycolmap module
     db_path = os.path.join(target_dir,"database.db")
 
-    # assume that colmap has already been installed; call the functions as a subprocess rather than using the pycolmap module
-    feature_extraction = subprocess.run(["colmap", "feature_extractor",
-                                         "--database_path", db_path,
-                                         "--image_path", image_dir,
-                                         "--ImageReader.camera_model", "PINHOLE"])
-    stop_if_failed(feature_extraction)
+    if not map_only:
+        feature_extraction = subprocess.run(["colmap", "feature_extractor",
+                                            "--database_path", db_path,
+                                            "--image_path", image_dir,
+                                            "--ImageReader.camera_model", "PINHOLE"])
+        stop_if_failed(feature_extraction)
 
-    # since frames are ordered with overlap between consecutive frames, use sequential feature matching
-    feature_matching_command = ["colmap", "sequential_matcher",
-                                       "--database_path", db_path]
+        # since frames are ordered with overlap between consecutive frames, use sequential feature matching
+        feature_matching_command = ["colmap", "sequential_matcher",
+                                        "--database_path", db_path]
 
-    # check to see whether a vocab tree is in the expected place; if so, add loop detection to the feature matching command
-    if os.path.isfile(vocabtree_location):
-        feature_matching_command += ["--SequentialMatching.loop_detection", "1",
-                                       "--SequentialMatching.vocab_tree_path", vocabtree_location]
+        # check to see whether a vocab tree is in the expected place; if so, add loop detection to the feature matching command
+        if os.path.isfile(vocabtree_location):
+            feature_matching_command += ["--SequentialMatching.loop_detection", "1",
+                                        "--SequentialMatching.vocab_tree_path", vocabtree_location]
 
-    feature_matching = subprocess.run(feature_matching_command)
-    stop_if_failed(feature_matching)
+        feature_matching = subprocess.run(feature_matching_command)
+        stop_if_failed(feature_matching)
 
     # perform incremental mapping to register image locations
     incremental_mapping = subprocess.run(["colmap", "mapper",
@@ -137,8 +211,7 @@ def process_colmap(image_dir, target_dir, vocabtree_location="./nvs_from_video/v
     print("COLMAP processing complete")
 
 
-def run_preprocessing(src, tgt, frames_exist=False, frame_sample_period=30):
-    # check whether a colmap dataset already exists for this set of parameters
+def run_preprocessing(src, tgt, frames_exist=False, skip_colmap=False, frame_sample_period=30, colmap_map_only=False, split_train_test=True):
     
     try:
         tgt = directory_setup(src, tgt)
@@ -157,7 +230,11 @@ def run_preprocessing(src, tgt, frames_exist=False, frame_sample_period=30):
             quit(code=1)
 
     # run colmap, placing output in the folder set up earlier
-    # check whether colmap already run for this dataset
-    process_colmap(os.path.join(tgt, "frames"), os.path.join(tgt, "colmap_output"))
+    # TODO: check whether colmap already run for this dataset, and also skip automatically
+    if not skip_colmap:
+        process_colmap(os.path.join(tgt, "frames"), os.path.join(tgt, "colmap_output"), colmap_map_only)
+
+    if split_train_test:
+        train_test_split(tgt)
 
     return tgt
