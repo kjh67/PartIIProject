@@ -163,7 +163,7 @@ def extract_frames(src, tgt, frequency=30):
     while cont:
         if frame_number%frequency== 0:
             for n, mapping in enumerate(mappings):
-                fname = '/frame' + str((frame_number // frequency)*9 + n) + '.jpg'
+                fname = '/frame' + "{:04d}".format((frame_number // frequency)*9 + n) + '.jpg'
                 to_write = cv2.remap(frame, mapping[0], mapping[1], cv2.INTER_CUBIC, borderMode=cv2.BORDER_WRAP)
                 cv2.imwrite((tgt + fname), to_write)
 
