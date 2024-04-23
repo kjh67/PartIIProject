@@ -8,10 +8,10 @@ from nvs_from_video.video_processing_utils import run_preprocessing
 def process_splat(tgt, eval):
     # run gaussian optimisation, outputting into new folder
     if eval:
-        colmap_path = os.path.join(tgt, "train", "colmap_path")
+        colmap_path = os.path.join(tgt, "train", "colmap_output")
         image_path = os.path.join(tgt, "train", "images")
     else:
-        colmap_path = os.path.join(tgt, "colmap_path")
+        colmap_path = os.path.join(tgt, "colmap_output")
         image_path = os.path.join(tgt, "frames")
 
     splat_processing = subprocess.run(["python", "gaussian-splatting/train.py",
@@ -29,10 +29,10 @@ def process_splat(tgt, eval):
 
 def process_nerf(tgt, eval):
     if eval:
-        colmap_path = os.path.join(tgt, "train", "colmap_path")
+        colmap_path = os.path.join(tgt, "train", "colmap_output")
         image_path = os.path.join(tgt, "train", "images")
     else:
-        colmap_path = os.path.join(tgt, "colmap_path")
+        colmap_path = os.path.join(tgt, "colmap_output")
 
     nerf_processing = subprocess.run(["ns-train", "nerfacto", "colmap", 
                                       "--data", tgt,
