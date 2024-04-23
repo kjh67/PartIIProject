@@ -75,7 +75,7 @@ def train_test_split(source_directory, train_proportion=0.8):
     points3D = read_points3D_binary(os.path.join(source_colmap_directory, "points3D.bin"))
 
     # Take a subset of shuffled images for training, and the rest for testing
-    image_ids_shuffled = np.shuffle(np.array(images.keys()))
+    image_ids_shuffled = np.random.shuffle(np.array(images.keys()))
     train_image_ids = image_ids_shuffled[:int(len(image_ids_shuffled)*train_proportion)]
     test_image_ids = image_ids_shuffled[int(len(image_ids_shuffled)*train_proportion):]
 
@@ -140,6 +140,7 @@ def extract_frames(src, tgt, frequency=30):
 
     video, sources = get_next_video(sources)
     if not video:
+        print("No videos found")
         return
 
     cont, frame = video.read()
