@@ -71,11 +71,12 @@ def train_test_split(source_directory, train_proportion=0.8):
 
     # Get list of all COLMAPed images; returned as dictionaries
     images = read_images_binary(os.path.join(source_colmap_directory, "images.bin"))
+    print(images.keys())
     cameras = read_cameras_binary(os.path.join(source_colmap_directory, "cameras.bin"))
     points3D = read_points3D_binary(os.path.join(source_colmap_directory, "points3D.bin"))
 
     # Take a subset of shuffled images for training, and the rest for testing
-    image_ids_shuffled = np.random.shuffle(list(images.keys()))
+    image_ids_shuffled = np.random.shuffle(np.array(list(images.keys())))
     train_image_ids = image_ids_shuffled[:int(len(image_ids_shuffled)*train_proportion)]
     test_image_ids = image_ids_shuffled[int(len(image_ids_shuffled)*train_proportion):]
 
