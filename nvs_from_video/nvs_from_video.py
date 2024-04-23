@@ -75,7 +75,7 @@ if __name__ == "__main__":
             when generating Gaussian Splats if COLMAP output has previously been \
             generated on the source data")
     parser.add_argument(
-        '--colmap_map_only', 'cmo', action='store_true'
+        '--colmap_map_only', '-cmo', action='store_true'
     )
     parser.add_argument(
         '--frame_sample_period', '-fp', type=int,
