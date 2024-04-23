@@ -184,7 +184,7 @@ def extract_frames(src, tgt, frequency=30):
     print('Extraction complete')
 
 
-def process_colmap(image_dir, target_dir, map_only=False, vocabtree_location="./nvs_from_video/vocab_tree.bin"):
+def process_colmap(image_dir, target_dir, map_only=False, vocabtree_location="./nvs_from_video/vocab_tree.bin", match_exhaustive=False, vocabtree_match=False):
     """src is the directory containing extracted frames; tgt is 
     the directory in which to output the COLMAP database and 
     reconstruction files"""
@@ -204,14 +204,19 @@ def process_colmap(image_dir, target_dir, map_only=False, vocabtree_location="./
                                             "--ImageReader.camera_model", "PINHOLE"])
         stop_if_failed(feature_extraction)
 
-        # since frames are ordered with overlap between consecutive frames, use sequential feature matching
-        feature_matching_command = ["colmap", "sequential_matcher",
-                                        "--database_path", db_path]
-
-        # check to see whether a vocab tree is in the expected place; if so, add loop detection to the feature matching command
-        if os.path.isfile(vocabtree_location):
-            feature_matching_command += ["--SequentialMatching.loop_detection", "1",
-                                        "--SequentialMatching.vocab_tree_path", vocabtree_location]
+        if match_exhaustive:
+            feature_matching_command = ["colmap", "exhaustive_matcher", "--database_path", db_path]
+        elif vocabtree_match:
+            # if opting to use vocab tree matching, assume that the vocab tree is accessible
+            feature_matching_command = ["colmap", "vocab_tree_matcher", "--database_path", db_path, "--VocabTreeMatching.vocab_tree_path", vocabtree_location]
+        else:
+            # since frames are ordered with overlap between consecutive frames, use sequential feature matching
+            feature_matching_command = ["colmap", "sequential_matcher",
+                                            "--database_path", db_path]
+            # check to see whether a vocab tree is in the expected place; if so, add loop detection to the feature matching command
+            if os.path.isfile(vocabtree_location):
+                feature_matching_command += ["--SequentialMatching.loop_detection", "1",
+                                            "--SequentialMatching.vocab_tree_path", vocabtree_location]
 
         feature_matching = subprocess.run(feature_matching_command)
         stop_if_failed(feature_matching)
@@ -227,7 +232,7 @@ def process_colmap(image_dir, target_dir, map_only=False, vocabtree_location="./
     print("COLMAP processing complete")
 
 
-def run_preprocessing(src, tgt, frames_exist=False, skip_colmap=False, frame_sample_period=30, colmap_map_only=False, split_train_test=True, train_proportion=0.8):
+def run_preprocessing(src, tgt, frames_exist=False, skip_colmap=False, frame_sample_period=30, colmap_map_only=False, split_train_test=True, train_proportion=0.8, match_exhaustive=False, vocabtree_match=False):
     
     try:
         tgt = directory_setup(src, tgt)
@@ -248,7 +253,7 @@ def run_preprocessing(src, tgt, frames_exist=False, skip_colmap=False, frame_sam
     # run colmap, placing output in the folder set up earlier
     # TODO: check whether colmap already run for this dataset, and also skip automatically
     if not skip_colmap:
-        process_colmap(os.path.join(tgt, "frames"), os.path.join(tgt, "colmap_output"), colmap_map_only)
+        process_colmap(os.path.join(tgt, "frames"), os.path.join(tgt, "colmap_output"), colmap_map_only, match_exhaustive, vocabtree_match)
 
     if split_train_test:
         train_test_split(tgt, train_proportion)

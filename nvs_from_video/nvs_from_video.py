@@ -25,6 +25,13 @@ def process_splat(tgt, eval):
     if eval:
         pass
         # INSERT EVALUATION ACTIVITY HERE: render all frames, check PSNR for testing and training
+        # render frames into a 'results' folder
+        # pass the folder path (and that of ground truth images) to the 'eval' function, which will calculate PSNRs etc
+
+        test_rendering = subprocess.run(["python", "gaussian-splatting/render.py",
+                                         "-s", os.path.join(tgt, "test", "colmap_output"),
+                                         "-m", tgt,
+                                         "--skip_test"])
 
 
 def process_nerf(tgt, eval):
@@ -47,7 +54,6 @@ def process_nerf(tgt, eval):
 
 
 if __name__ == "__main__":
-    # check args
 
     parser = argparse.ArgumentParser(
         description="""
@@ -84,15 +90,22 @@ if __name__ == "__main__":
             for 30fps video)."
     )
     parser.add_argument(
-        '--eval', action='store_true'
+        '--eval', action='store_true',
+        help="Data will be split into separate training and testing sets"
     )
     parser.add_argument(
         '--train_proportion', type=float,
         help="Proportion of extracted frames to be used for training (remainder reserved for evaluation)"
     )
+    parser.add_argument(
+        "--colmap_exhaustive_match", action='store_true'
+    )
+    parser.add_argument(
+        "--colmap_vocabtree_match", action='store-true'
+    )
 
     args = parser.parse_args()
-    tgt = run_preprocessing(args.source_path, args.target_path, args.skip_framegen, args.skip_colmap, args.frame_sample_period, args.colmap_map_only, args.eval, args.train_proportion)
+    tgt = run_preprocessing(args.source_path, args.target_path, args.skip_framegen, args.skip_colmap, args.frame_sample_period, args.colmap_map_only, args.eval, args.train_proportion, args.colmap_exhaustive_match, args.colmap_vocabtree_match)
 
     if args.reconstruction_type == "nerf":
         process_nerf(tgt, args.eval)
