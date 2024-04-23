@@ -227,7 +227,7 @@ def process_colmap(image_dir, target_dir, map_only=False, vocabtree_location="./
     print("COLMAP processing complete")
 
 
-def run_preprocessing(src, tgt, frames_exist=False, skip_colmap=False, frame_sample_period=30, colmap_map_only=False, split_train_test=True):
+def run_preprocessing(src, tgt, frames_exist=False, skip_colmap=False, frame_sample_period=30, colmap_map_only=False, split_train_test=True, train_proportion=0.8):
     
     try:
         tgt = directory_setup(src, tgt)
@@ -251,6 +251,6 @@ def run_preprocessing(src, tgt, frames_exist=False, skip_colmap=False, frame_sam
         process_colmap(os.path.join(tgt, "frames"), os.path.join(tgt, "colmap_output"), colmap_map_only)
 
     if split_train_test:
-        train_test_split(tgt)
+        train_test_split(tgt, train_proportion)
 
     return tgt

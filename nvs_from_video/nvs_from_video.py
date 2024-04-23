@@ -86,9 +86,13 @@ if __name__ == "__main__":
     parser.add_argument(
         '--eval', action='store_true'
     )
+    parser.add_argument(
+        '--train_proportion', type=float,
+        help="Proportion of extracted frames to be used for training (remainder reserved for evaluation)"
+    )
 
     args = parser.parse_args()
-    tgt = run_preprocessing(args.source_path, args.target_path, args.skip_framegen, args.skip_colmap, args.frame_sample_period, args.colmap_map_only, args.eval)
+    tgt = run_preprocessing(args.source_path, args.target_path, args.skip_framegen, args.skip_colmap, args.frame_sample_period, args.colmap_map_only, args.eval, args.train_proportion)
 
     if args.reconstruction_type == "nerf":
         process_nerf(tgt, args.eval)
