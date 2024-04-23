@@ -51,10 +51,9 @@ def retrieve_colmap_information(image_ids, all_images, all_cameras, all_points3D
         cam_id = images[im_id].camera_id
         cameras[cam_id] = all_cameras[cam_id]
         points3D_ids = images[im_id].point3D_ids
-        print(points3D_ids)
         for point_id in points3D_ids:
+            # Many of the point_ids are -1, signifying no point
             if point_id != -1:
-                print(point_id)
                 points3D[point_id] = all_points3D[point_id]
         image_names.append(images[im_id].name)
     return images, cameras, points3D, image_names
@@ -64,10 +63,16 @@ def train_test_split(source_directory, train_proportion=0.8):
     """Takes an output directory, containing directories 'colmap_output' and 
     'frames', and creates separate 'train' and 'test' directories"""
 
+    print("Generating training and testing datasets")
+
     # Make directories: colmap_output/test/sparse/0, and colmap_output/train/sparse/0
     source_colmap_directory = os.path.join(source_directory, "colmap_output", "sparse", "0")
     train_colmap_directory = os.path.join(source_directory, "train", "colmap_output", "sparse", "0")
     test_colmap_directory = os.path.join(source_directory, "test", "colmap_output", "sparse", "0")
+
+    if os.path.exists(train_colmap_directory):
+        print("Training and testing sets previously generated")
+        return
 
     os.makedirs(os.path.join(train_colmap_directory))
     os.makedirs(os.path.join(test_colmap_directory))
@@ -76,6 +81,8 @@ def train_test_split(source_directory, train_proportion=0.8):
     images = read_images_binary(os.path.join(source_colmap_directory, "images.bin"))
     cameras = read_cameras_binary(os.path.join(source_colmap_directory, "cameras.bin"))
     points3D = read_points3D_binary(os.path.join(source_colmap_directory, "points3D.bin"))
+
+    print("COLMAP information read")
 
     # Take a subset of shuffled images for training, and the rest for testing
     image_ids_shuffled = list(images.keys())
@@ -99,6 +106,8 @@ def train_test_split(source_directory, train_proportion=0.8):
     write_points3D_binary(train_points3D, os.path.join(train_colmap_directory, "points3D.bin"))
     write_points3D_binary(test_points3D, os.path.join(test_colmap_directory, "points3D.bin"))
 
+    print("COLMAP information written")
+
     # Copy images into test and train folders
     source_image_directory = os.path.join(source_directory, "frames")
     train_image_directory = os.path.join(source_directory, "train", "images")
@@ -109,8 +118,10 @@ def train_test_split(source_directory, train_proportion=0.8):
 
     for image in train_image_names:
         shutil.copy(os.path.join(source_image_directory, image), os.path.join(train_image_directory, image))
+    print("Finished writing images to training directory")
     for image in test_image_names:
         shutil.copy(os.path.join(source_image_directory, image), os.path.join(test_image_directory, image))
+    print("Finished writing images to testing directory")
 
     print("Training and testing datasets generated.")
 

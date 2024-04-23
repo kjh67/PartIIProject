@@ -16,7 +16,7 @@ def process_splat(tgt, eval):
 
     splat_processing = subprocess.run(["python", "gaussian-splatting/train.py",
                                        "-s", colmap_path, 
-                                       "'m", tgt,
+                                       "-m", tgt,
                                        "--images", image_path])
     if splat_processing.returncode != 0:
         print("Error processing gaussian splat")
