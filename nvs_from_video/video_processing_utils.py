@@ -47,6 +47,7 @@ def retrieve_colmap_information(image_ids, all_images, all_cameras, all_points3D
     points3D = {}
     image_names = []
     for im_id in image_ids:
+        print(all_images[im_id])
         images[im_id] = all_images[im_id]
         cam_id = images[im_id].camera_id
         cameras[cam_id] = all_cameras[cam_id]
