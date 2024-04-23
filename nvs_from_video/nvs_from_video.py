@@ -101,7 +101,7 @@ if __name__ == "__main__":
         "--colmap_exhaustive_match", action='store_true'
     )
     parser.add_argument(
-        "--colmap_vocabtree_match", action='store-true'
+        "--colmap_vocabtree_match", action='store_true'
     )
 
     args = parser.parse_args()
