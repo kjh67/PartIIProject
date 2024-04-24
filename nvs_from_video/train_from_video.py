@@ -22,17 +22,6 @@ def process_splat(tgt, eval):
         print("Error processing gaussian splat")
         quit(code=1)
 
-    if eval:
-        pass
-        # INSERT EVALUATION ACTIVITY HERE: render all frames, check PSNR for testing and training
-        # render frames into a 'results' folder
-        # pass the folder path (and that of ground truth images) to the 'eval' function, which will calculate PSNRs etc
-
-        test_rendering = subprocess.run(["python", "gaussian-splatting/render.py",
-                                         "-s", os.path.join(tgt, "test", "colmap_output"),
-                                         "-m", tgt,
-                                         "--skip_test"])
-
 
 def process_nerf(tgt, eval):
     if eval:
@@ -48,9 +37,6 @@ def process_nerf(tgt, eval):
     if nerf_processing.returncode != 0:
         print("Error processing NeRF")
         quit(code=1)
-
-    if eval:
-        pass
 
 
 if __name__ == "__main__":
@@ -98,7 +84,8 @@ if __name__ == "__main__":
         help="Proportion of extracted frames to be used for training (remainder reserved for evaluation)"
     )
     parser.add_argument(
-        "--colmap_exhaustive_match", action='store_true'
+        "--colmap_exhaustive_match", action='store_true',
+        help="Will use exhaustive matching during COLMAP processing. Not recommended for more than a few hundred images"
     )
     parser.add_argument(
         "--colmap_vocabtree_match", action='store_true'

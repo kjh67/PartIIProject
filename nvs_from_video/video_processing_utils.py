@@ -35,9 +35,6 @@ def directory_setup(src, tgt):
     os.makedirs(os.path.join(tgt, "colmap_output/sparse"))
     with open(os.path.join(tgt, "colmap_output", "database.db"), "w") as _: pass
 
-    # 3. set up splatting output folder
-    os.mkdir(os.path.join(tgt, "model_output"))
-
     return tgt
 
 
