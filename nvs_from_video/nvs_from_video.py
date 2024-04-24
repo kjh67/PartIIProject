@@ -84,7 +84,7 @@ if __name__ == "__main__":
         '--colmap_map_only', '-cmo', action='store_true'
     )
     parser.add_argument(
-        '--frame_sample_period', '-fp', type=int,
+        '--frame_sample_period', '-fp', type=int, default=30,
         help="Frequency at which frames are sampled from the source videos at the frame \
             extraction state. Default value 30 (corresponding to 1 sample per second \
             for 30fps video)."
@@ -94,7 +94,7 @@ if __name__ == "__main__":
         help="Data will be split into separate training and testing sets"
     )
     parser.add_argument(
-        '--train_proportion', type=float,
+        '--train_proportion', type=float, default=0.8,
         help="Proportion of extracted frames to be used for training (remainder reserved for evaluation)"
     )
     parser.add_argument(
@@ -103,9 +103,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "--colmap_vocabtree_match", action='store_true'
     )
+    parser.add_argument(
+        "--colmap_vocabtree_location", type=str, default="./nvs_from_video/vocab_tree.bin"
+    )
 
     args = parser.parse_args()
-    tgt = run_preprocessing(args.source_path, args.target_path, args.skip_framegen, args.skip_colmap, args.frame_sample_period, args.colmap_map_only, args.eval, args.train_proportion, args.colmap_exhaustive_match, args.colmap_vocabtree_match)
+    tgt = run_preprocessing(args)
 
     if args.reconstruction_type == "nerf":
         process_nerf(tgt, args.eval)
