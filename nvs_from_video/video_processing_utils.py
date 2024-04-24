@@ -25,14 +25,13 @@ def directory_setup(src, tgt):
     if tgt is None:
         # get the source directory name, create a target called NAME_output
         tgt = os.path.join(os.path.dirname(src), os.path.basename(src)+'_output')
-    if not os.path.exists(tgt):
-        os.makedirs(tgt)
+    os.makedirs(tgt, exist_ok=True)
 
     # 1. set up frame extraction folder
-    os.mkdir(os.path.join(tgt, "frames"))
+    os.makedirs(os.path.join(tgt, "frames"), exist_ok=True)
     
     # 2. set up colmap output folder, including empty database and sparse folder
-    os.makedirs(os.path.join(tgt, "colmap_output/sparse"))
+    os.makedirs(os.path.join(tgt, "colmap_output/sparse"), exist_ok=True)
     with open(os.path.join(tgt, "colmap_output", "database.db"), "w") as _: pass
 
     return tgt
@@ -235,13 +234,11 @@ def run_preprocessing(args):
     except DirectorySetupError as e:
         print(e.message)
         quit(code=1)
-    except FileExistsError as e:
-        print("Filespace previously set up")
 
     # extract frames into new folder
     if not args.skip_framegen:
         try:
-            extract_frames(args.source_path, os.path.join(tgt, "frames"), args.frame_sample_period)
+            extract_frames(args.source_path, os.path.join(args.target_path, "frames"), args.frame_sample_period)
         except FileExistsError as f:
             print("Failed to extract frames from video")
             quit(code=1)
