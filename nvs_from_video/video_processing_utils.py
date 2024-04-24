@@ -20,6 +20,8 @@ class DirectorySetupError(Exception):
 def directory_setup(src, tgt):
     if not os.path.exists(src):
         raise DirectorySetupError("Error: Source directory does not exist")
+    
+    print("Setting up directories")
 
     # ensure that a target folder exists
     if tgt is None:
@@ -139,6 +141,8 @@ def get_next_video(src_list):
 def extract_frames(src, tgt, frequency=30):
     """Assumes input video at 30fps, downsampling to one frame per second by default"""
 
+    print("Beginning extraction of frames from video")
+
     sources = os.scandir(src) # get list of video files in the source folder
 
     # generate mappings from the equirectangular image to pinhole images
@@ -177,7 +181,7 @@ def extract_frames(src, tgt, frequency=30):
                 print('Progressed to next video')
 
     cv2.destroyAllWindows()
-    print('Extraction complete')
+    print('Frame extraction complete')
 
 
 def process_colmap(image_dir, target_dir, args):
