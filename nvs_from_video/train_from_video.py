@@ -17,7 +17,8 @@ def process_splat(tgt, eval):
     splat_processing = subprocess.run(["python", "gaussian-splatting/train.py",
                                        "-s", colmap_path, 
                                        "-m", tgt,
-                                       "--images", image_path])
+                                       "--images", image_path,
+                                       "--test_iterations", -1])
     if splat_processing.returncode != 0:
         print("Error processing gaussian splat")
         quit(code=1)
@@ -30,10 +31,15 @@ def process_nerf(tgt, eval):
     else:
         colmap_path = os.path.join(tgt, "colmap_output")
 
-    nerf_processing = subprocess.run(["ns-train", "nerfacto", "colmap", 
+    nerf_processing = subprocess.run(["ns-train", "nerfacto", 
+                                      "--viewer.websocket-port", "7007",
+                                      "--viewer.make-share-url", "True",
+                                      "colmap", 
                                       "--data", tgt,
                                       "--images-path", image_path,
-                                      "--colmap_path", colmap_path])
+                                      "--colmap_path", colmap_path,
+                                      "--train-split-fraction", "1",
+                                      "--downscale_factor", "1"])
     if nerf_processing.returncode != 0:
         print("Error processing NeRF")
         quit(code=1)
