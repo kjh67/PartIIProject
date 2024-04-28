@@ -49,7 +49,7 @@ def calculate_metrics(gt_folder, render_folder, output_file):
     mses = []
 
     with os.scandir(gt_folder) as images:
-        for image in image:
+        for image in images:
             # Load ground truth image
             gt_image = cv2.imread(image.path)
 
