@@ -72,8 +72,8 @@ def train_test_split(source_directory, train_proportion=0.8):
         print("Training and testing sets previously generated")
         return
 
-    os.makedirs(os.path.join(train_colmap_directory))
-    os.makedirs(os.path.join(test_colmap_directory))
+    os.makedirs(train_colmap_directory)
+    os.makedirs(test_colmap_directory)
 
     # Get list of all COLMAPed images; returned as dictionaries
     images = read_images_binary(os.path.join(source_colmap_directory, "images.bin"))
@@ -143,8 +143,6 @@ def extract_frames(src, tgt, frequency=30):
 
     print("Beginning extraction of frames from video")
 
-    sources = os.scandir(src) # get list of video files in the source folder
-
     # generate mappings from the equirectangular image to pinhole images
     # plus and minus 25deg from level, and plus minus 45 each side
     mappings = []
@@ -153,32 +151,33 @@ def extract_frames(src, tgt, frequency=30):
             x_map, y_map = map_equi_pinhole(100,5760,2880,1600,1200,yaw, pitch)
             mappings.append([x_map.astype(np.float32), y_map.astype(np.float32)])
 
-    video, sources = get_next_video(sources)
-    if not video:
-        print("No videos found")
-        return
-
-    cont, frame = video.read()
-    frame_number = 0
-    while cont:
-        if frame_number%frequency== 0:
-            for n, mapping in enumerate(mappings):
-                fname = '/frame' + "{:04d}".format((frame_number // frequency)*9 + n) + '.jpg'
-                to_write = cv2.remap(frame, mapping[0], mapping[1], cv2.INTER_CUBIC, borderMode=cv2.BORDER_WRAP)
-                cv2.imwrite((tgt + fname), to_write)
-
-        if frame_number%(frequency*10) == 0:
-            print(str(frame_number//frequency)+' frames extracted')
-        frame_number += 1
+    with os.scandir(src) as sources:
+        video, sources = get_next_video(sources)
+        if not video:
+            print("No videos found")
+            return
 
         cont, frame = video.read()
-        if not cont:
-            # get the next video
-            video.release()
-            video, sources = get_next_video(sources)
-            if video:
-                cont = True
-                print('Progressed to next video')
+        frame_number = 0
+        while cont:
+            if frame_number%frequency== 0:
+                for n, mapping in enumerate(mappings):
+                    fname = '/frame' + "{:04d}".format((frame_number // frequency)*9 + n) + '.jpg'
+                    to_write = cv2.remap(frame, mapping[0], mapping[1], cv2.INTER_CUBIC, borderMode=cv2.BORDER_WRAP)
+                    cv2.imwrite((tgt + fname), to_write)
+
+            if frame_number%(frequency*10) == 0:
+                print(str(frame_number//frequency)+' frames extracted')
+            frame_number += 1
+
+            cont, frame = video.read()
+            if not cont:
+                # get the next video
+                video.release()
+                video, sources = get_next_video(sources)
+                if video:
+                    cont = True
+                    print('Progressed to next video')
 
     cv2.destroyAllWindows()
     print('Frame extraction complete')
@@ -248,7 +247,6 @@ def run_preprocessing(args):
             quit(code=1)
 
     # run colmap, placing output in the folder set up earlier
-    # TODO: check whether colmap already run for this dataset, and also skip automatically
     if not args.skip_colmap:
         process_colmap(os.path.join(tgt, "frames"), os.path.join(tgt, "colmap_output"), args)
 
