@@ -43,16 +43,31 @@ def render_colmap_dir_nerf():
     return -1
 
 
-def save_data():
-    pass
-
-
-def calculate_metrics(gt_folder, render_folder):
+def calculate_metrics(gt_folder, render_folder, output_file):
     """Assumes that the ground truth and render images to be compared have the same names"""
 
     psnrs = []
     ssims = []
     mses = []
+
+    with os.scandir(gt_folder) as images:
+        for image in image:
+            # Load ground truth image
+            gt_image = cv2.imread(image.path)
+
+            # Load render
+            render_image = cv2.imread(os.path.join(render_folder, image.name))
+
+            # Compare, and record results
+            psnrs.append(peak_signal_noise_ratio(gt_image, render_image))
+            ssims.append(structural_similarity(gt_image, render_image))
+            mses.append(mean_squared_error(gt_image, render_image))
+
+    # Write results to the output file
+    with open(output_file, 'w') as f:
+        f.write(psnrs)
+        f.write(ssims)
+        f.write(mses)
 
 
 if __name__ == "__main__":
@@ -75,3 +90,5 @@ if __name__ == "__main__":
 
     if args.nerf:
         output_dir = render_colmap_dir_nerf()
+
+    calculate_metrics(args.images, output_dir, args.output_file)
