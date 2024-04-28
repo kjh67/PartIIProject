@@ -7,16 +7,16 @@ import cv2
 
 from skimage.metrics import peak_signal_noise_ratio, structural_similarity, mean_squared_error
 
-def import_module_from_path(path, module_name):
-    module_spec = importlib.util.spec_from_file_location(module_name, path)
+def import_module_from_file(filename, module_name):
+    module_spec = importlib.util.spec_from_file_location(module_name, filename)
     module = importlib.util.module_from_spec(module_spec)
     sys.modules[module_name] = module
     module_spec.loader.exec_module(module)
     return module
 
-gaussian_scene = import_module_from_path("gaussian-splatting/scene", "scene")
-gaussian_renderer = import_module_from_path("gaussian-splatting/gaussian_renderer", "gaussian_renderer")
-gaussian_arguments = import_module_from_path("gaussian-splatting/arguments", "arguments")
+gaussian_scene = import_module_from_file("gaussian-splatting/scene/__init__.py", "scene")
+gaussian_renderer = import_module_from_file("gaussian-splatting/gaussian_renderer/__init__.py", "gaussian_renderer")
+gaussian_arguments = import_module_from_file("gaussian-splatting/arguments/__init__.py", "arguments")
 
 
 def render_colmap_dir_splat(modelparams, iteration, pipelineparams):
