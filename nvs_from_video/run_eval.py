@@ -1,17 +1,22 @@
 import torch
-import importlib
+import importlib.util
+import sys
 import argparse
 import os
 import cv2
 
 from skimage.metrics import peak_signal_noise_ratio, structural_similarity, mean_squared_error
 
-gaussian_scene = importlib.import_module("gaussian-splatting/scene")
-gaussian_renderer = importlib.import_module("gaussian-splatting/gaussian_renderer")
-gaussian_arguments = importlib.import_module("gaussian-splatting/arguments")
+def import_module_from_path(path, module_name):
+    module_spec = importlib.util.spec_from_file_location(module_name, path)
+    module = importlib.util.module_from_spec(module_spec)
+    sys.modules[module_name] = module
+    module_spec.loader.exec_module(module)
+    return module
 
-# need to pass args as a ModelParas object to the scene contructor
-# need TWO SETS of model params; one for the trained scene, and one for the eval scene
+gaussian_scene = import_module_from_path("gaussian-splatting/scene", "scene")
+gaussian_renderer = import_module_from_path("gaussian-splatting/gaussian_renderer", "gaussian_renderer")
+gaussian_arguments = import_module_from_path("gaussian-splatting/arguments", "arguments")
 
 
 def render_colmap_dir_splat(modelparams, iteration, pipelineparams):
