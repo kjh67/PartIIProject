@@ -2,10 +2,9 @@ import torch
 import argparse
 import os
 import cv2
+import numpy as np
 
 from skimage.metrics import peak_signal_noise_ratio, structural_similarity, mean_squared_error
-
-import gaussian_splatting
 
 from gaussian_splatting.scene import Scene
 from gaussian_splatting.gaussian_renderer import GaussianModel
@@ -30,7 +29,7 @@ def render_colmap_dir_splat(modelparams, iteration, pipelineparams):
         os.makedirs(output_path, exist_ok=True)
 
         for camera in test_scene.getTrainCameras():
-            rendering = render_gaussians(camera, gaussians, pipelineparams, background)["render"]
+            rendering = np.array(render_gaussians(camera, gaussians, pipelineparams, background)["render"])
 
             cv2.imwrite(os.path.join(output_path, camera.image_name), rendering)
             print(f"Rendered {camera.image_name}")
