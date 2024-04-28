@@ -1,5 +1,5 @@
 [submodule "gaussian-splatting"]
-	path = gaussian-splatting
+	path = gaussian_splatting
 	url = https://github.com/kjh67/gaussian-splatting.git
 [submodule "colmap"]
 	path = colmap
