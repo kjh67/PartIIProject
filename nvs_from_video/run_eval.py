@@ -30,7 +30,7 @@ def render_colmap_dir_splat(modelparams, iteration, pipelineparams):
         assert(os.path.exists(output_path))
 
         for camera in test_scene.getTrainCameras():
-            rendering = np.array(render_gaussians(camera, gaussians, pipelineparams, background)["render"].cpu().detach(), dtype=np.int8)
+            rendering = np.moveaxis(np.array(render_gaussians(camera, gaussians, pipelineparams, background)["render"].cpu().detach()), 0, -1)
             print(rendering)
             print(rendering.shape)
             filename = camera.image_name + ".jpg"
