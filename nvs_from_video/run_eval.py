@@ -30,12 +30,9 @@ def render_colmap_dir_splat(modelparams, iteration, pipelineparams):
         assert(os.path.exists(output_path))
 
         for camera in test_scene.getTrainCameras():
-            rendering = np.moveaxis(np.array(render_gaussians(camera, gaussians, pipelineparams, background)["render"].cpu().detach()), 0, -1)
-            print(rendering)
-            print(rendering.shape)
+            rendering = np.moveaxis(np.array(render_gaussians(camera, gaussians, pipelineparams, background)["render"].cpu().detach()), 0, -1) * 255
             filename = camera.image_name + ".jpg"
             image_path = os.path.join(output_path, filename)
-            print(image_path)
             written = cv2.imwrite(image_path, rendering)
             print(f"Rendered {camera.image_name} {written}")
 
