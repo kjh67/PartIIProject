@@ -29,7 +29,7 @@ def render_colmap_dir_splat(modelparams, iteration, pipelineparams):
         os.makedirs(output_path, exist_ok=True)
 
         for camera in test_scene.getTrainCameras():
-            rendering = np.array(render_gaussians(camera, gaussians, pipelineparams, background)["render"])
+            rendering = np.array(render_gaussians(camera, gaussians, pipelineparams, background)["render"].cpu().detach())
 
             cv2.imwrite(os.path.join(output_path, camera.image_name), rendering)
             print(f"Rendered {camera.image_name}")
