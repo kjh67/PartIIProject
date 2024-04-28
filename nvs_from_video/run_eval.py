@@ -1,22 +1,14 @@
 import torch
-import importlib.util
-import sys
 import argparse
 import os
 import cv2
 
 from skimage.metrics import peak_signal_noise_ratio, structural_similarity, mean_squared_error
 
-def import_module_from_file(filename, module_name):
-    module_spec = importlib.util.spec_from_file_location(module_name, filename)
-    module = importlib.util.module_from_spec(module_spec)
-    sys.modules[module_name] = module
-    module_spec.loader.exec_module(module)
-    return module
-
-gaussian_scene = import_module_from_file("gaussian-splatting/scene/__init__.py", "scene")
-gaussian_renderer = import_module_from_file("gaussian-splatting/gaussian_renderer/__init__.py", "gaussian_renderer")
-gaussian_arguments = import_module_from_file("gaussian-splatting/arguments/__init__.py", "arguments")
+from gaussian_splatting.scene import Scene
+from gaussian_splatting.gaussian_renderer import GaussianModel
+from gaussian_splatting.gaussian_renderer import render as render_gaussians
+from gaussian_splatting.arguments import ModelParams, PipelineParams, get_combined_args
 
 
 def render_colmap_dir_splat(modelparams, iteration, pipelineparams):
@@ -27,8 +19,8 @@ def render_colmap_dir_splat(modelparams, iteration, pipelineparams):
     print("Rendering test images")
 
     with torch.no_grad():
-        gaussians = gaussian_renderer.GaussianModel(modelparams.sh_degree)
-        test_scene = gaussian_scene.Scene(modelparams, gaussians, load_iteration=iteration, shuffle=False)
+        gaussians = GaussianModel(modelparams.sh_degree)
+        test_scene = Scene(modelparams, gaussians, load_iteration=iteration, shuffle=False)
 
         background=torch.tensor([0,0,0], dtype=torch.float32, device="cuda")
 
@@ -36,7 +28,7 @@ def render_colmap_dir_splat(modelparams, iteration, pipelineparams):
         os.makedirs(output_path, exist_ok=True)
 
         for camera in test_scene.getTrainCameras():
-            rendering = gaussian_renderer.render(camera, gaussians, pipelineparams, background)["render"]
+            rendering = render_gaussians(camera, gaussians, pipelineparams, background)["render"]
 
             cv2.imwrite(os.path.join(output_path, camera.image_name), rendering)
             print(f"Rendered {camera.image_name}")
@@ -80,15 +72,15 @@ if __name__ == "__main__":
         description="""Computes PSNR, SSIM, and MSE for trained NVS models. Model must either be a NeRF or Gaussian Splat"""
     )
     # Gives the parameters --model_path, --source_path, --images
-    model = gaussian_arguments.ModelParams(parser, sentinel=True)
-    pipeline = gaussian_arguments.PipelineParams(parser)
+    model = ModelParams(parser, sentinel=True)
+    pipeline = PipelineParams(parser)
 
     parser.add_argument("--nerf", action='store_true')
     parser.add_argument("--splat", action='store_true')
     parser.add_argument("--output_file", type=str, default=None, help="File where outputs should be saved")
     parser.add_argument("--iteration", type=int, help="Evaluate model saved after this many iterations")
 
-    args = gaussian_arguments.get_combined_args(parser)
+    args = get_combined_args(parser)
 
     if args.splat:
         output_dir = render_colmap_dir_splat(model.extract(args), args.iteration, pipeline.extract(args))
