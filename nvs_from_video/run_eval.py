@@ -33,7 +33,7 @@ def render_colmap_dir_splat(modelparams, iteration, pipelineparams):
             rendering = np.moveaxis(np.array(render_gaussians(camera, gaussians, pipelineparams, background)["render"].cpu().detach()), 0, -1) * 255
             filename = camera.image_name + ".jpg"
             image_path = os.path.join(output_path, filename)
-            written = cv2.imwrite(image_path, rendering)
+            written = cv2.imwrite(image_path, cv2.cvtColor(rendering, cv2.COLOR_RGB2BGR))
             print(f"Rendered {camera.image_name} {written}")
 
     return output_path
