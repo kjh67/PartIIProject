@@ -5,6 +5,8 @@ import cv2
 
 from skimage.metrics import peak_signal_noise_ratio, structural_similarity, mean_squared_error
 
+import gaussian_splatting
+
 from gaussian_splatting.scene import Scene
 from gaussian_splatting.gaussian_renderer import GaussianModel
 from gaussian_splatting.gaussian_renderer import render as render_gaussians
