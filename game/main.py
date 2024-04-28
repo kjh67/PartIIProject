@@ -181,8 +181,3 @@ if __name__ == "__main__":
         mainloop_point(args.render_source)
     else:
         mainloop_gauss(args.render_source, args.colmap_cams_path)
-
-    #mainloop_point("C:/Users/kirst/Downloads/point_cloud(12).ply")
-    #mainloop_gauss("C:/Users/kirst/Downloads/point_cloud(12).ply", "C:/Users/kirst/Downloads/images.bin")
-    #mainloop_gauss("C:/Users/kirst/Downloads/point_cloud(11).ply", "../images.bin")
-    #mainloop_gauss("C:/Users/kirst/Downloads/point_cloud(15).ply", "C:/Users/kirst/Downloads/images(1).bin")
