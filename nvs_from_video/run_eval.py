@@ -31,6 +31,8 @@ def render_colmap_dir_splat(modelparams, iteration, pipelineparams):
 
         for camera in test_scene.getTrainCameras():
             rendering = np.array(render_gaussians(camera, gaussians, pipelineparams, background)["render"].cpu().detach())
+            print(rendering)
+            print(rendering.shape)
             filename = camera.image_name + ".jpg"
             image_path = os.path.join(output_path, filename)
             print(image_path)
