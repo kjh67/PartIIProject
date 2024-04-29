@@ -25,22 +25,23 @@ def process_splat(tgt, eval):
 
 
 def process_nerf(tgt, eval):
+    colmap_path = os.path.join("colmap_output", "sparse", "0")
+    image_path = os.path.join("images")
     if eval:
-        colmap_path = os.path.join(tgt, "train", "colmap_output")
-        image_path = os.path.join(tgt, "train", "images")
+        data_path = os.path.join(tgt, "train")
     else:
-        colmap_path = os.path.join(tgt, "colmap_output")
+        data_path = tgt
 
     nerf_processing = subprocess.run(["ns-train", "nerfacto",
                                       "--output-dir", tgt,
                                       "--viewer.websocket-port", "7007",
                                       "--viewer.make-share-url", "True",
                                       "colmap", 
-                                      "--data", tgt,
+                                      "--data", data_path,
                                       "--images-path", image_path,
-                                      "--colmap_path", colmap_path,
+                                      "--colmap-path", colmap_path,
                                       "--train-split-fraction", "1",
-                                      "--downscale_factor", "1"])
+                                      "--downscale-factor", "1"])
     if nerf_processing.returncode != 0:
         print("Error processing NeRF")
         quit(code=1)
