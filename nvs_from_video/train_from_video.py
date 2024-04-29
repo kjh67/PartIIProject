@@ -39,7 +39,8 @@ def process_nerf(tgt, eval):
                                       "--images-path", image_path,
                                       "--colmap_path", colmap_path,
                                       "--train-split-fraction", "1",
-                                      "--downscale_factor", "1"])
+                                      "--downscale_factor", "1",
+                                      "--output_dir", tgt])
     if nerf_processing.returncode != 0:
         print("Error processing NeRF")
         quit(code=1)
