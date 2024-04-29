@@ -31,7 +31,8 @@ def process_nerf(tgt, eval):
     else:
         colmap_path = os.path.join(tgt, "colmap_output")
 
-    nerf_processing = subprocess.run(["ns-train", "nerfacto", 
+    nerf_processing = subprocess.run(["ns-train", "nerfacto",
+                                      "--output-dir", tgt,
                                       "--viewer.websocket-port", "7007",
                                       "--viewer.make-share-url", "True",
                                       "colmap", 
@@ -39,8 +40,7 @@ def process_nerf(tgt, eval):
                                       "--images-path", image_path,
                                       "--colmap_path", colmap_path,
                                       "--train-split-fraction", "1",
-                                      "--downscale_factor", "1",
-                                      "--output_dir", tgt])
+                                      "--downscale_factor", "1"])
     if nerf_processing.returncode != 0:
         print("Error processing NeRF")
         quit(code=1)
