@@ -89,8 +89,8 @@ def calculate_metrics(gt_folder, render_folder, output_file):
 
     # Write results to the output file; one line per metric
     with open(output_file, 'w') as f:
-        f.write(",".join(str(psnr) for psnr in psnrs))
-        f.write(",".join(str(ssim) for ssim in ssims))
+        f.write(",".join(str(psnr) for psnr in psnrs) + '\n')
+        f.write(",".join(str(ssim) for ssim in ssims) + '\n')
         f.write(",".join(str(mse) for mse in mses))
 
 
