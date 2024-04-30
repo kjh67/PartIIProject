@@ -11,6 +11,8 @@ from gaussian_splatting.gaussian_renderer import GaussianModel
 from gaussian_splatting.gaussian_renderer import render as render_gaussians
 from gaussian_splatting.arguments import ModelParams, PipelineParams, get_combined_args
 
+from renderer.gauss_renderer import GaussianRenderer
+
 
 def render_colmap_dir_splat(modelparams, iteration, pipelineparams):
     # SOURCE PATH is for colmap data,
@@ -39,6 +41,28 @@ def render_colmap_dir_splat(modelparams, iteration, pipelineparams):
     return output_path
 
 
+
+def render_colmap_dir_splat_openGL(ply_path, colmap_source_path, output_path):
+    pass
+
+    print("Generating camera poses")
+
+    # First; get camera positions as 4x4 matrices
+    cameras = np.array()
+
+
+    # Set up renderer using the correct fov, image size, etc
+    renderer = GaussianRenderer()
+
+    # for each model matrix (corresponding to camera); render and save image
+    for camera in cameras:
+        renderer.update_modelview(camera)
+        renderer.render()
+        image_name = '' + '.jpg'
+        renderer.save_frame()
+
+
+
 def render_colmap_dir_nerf():
     return -1
 
@@ -57,6 +81,10 @@ def calculate_metrics(gt_folder, render_folder, output_file):
 
             # Load render
             render_image = cv2.imread(os.path.join(render_folder, image.name))
+
+            # Images are loaded in (w,h,c) format; metrics expect (c,w,h)
+            gt_image = np.moveaxis(gt_image, -1, 0)
+            render_image = np.moveaxis(render_image, -1, 0)
 
             # Compare, and record results
             psnrs.append(peak_signal_noise_ratio(gt_image, render_image))
