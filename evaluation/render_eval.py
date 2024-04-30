@@ -87,11 +87,11 @@ def calculate_metrics(gt_folder, render_folder, output_file):
             ssims.append(structural_similarity(gt_image, render_image, channel_axis=2))
             mses.append(mean_squared_error(gt_image, render_image))
 
-    # Write results to the output file
+    # Write results to the output file; one line per metric
     with open(output_file, 'w') as f:
-        f.write(psnrs)
-        f.write(ssims)
-        f.write(mses)
+        f.write(",".join(str(psnr) for psnr in psnrs))
+        f.write(",".join(str(ssim) for ssim in ssims))
+        f.write(",".join(str(mse) for mse in mses))
 
 
 if __name__ == "__main__":
