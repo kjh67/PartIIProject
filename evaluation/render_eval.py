@@ -79,16 +79,12 @@ def calculate_metrics(gt_folder, render_folder, output_file):
             # Load ground truth image
             gt_image = cv2.imread(image.path)
 
-            # Load render
+            # Load render; (w,h,c) format
             render_image = cv2.imread(os.path.join(render_folder, image.name))
-
-            # Images are loaded in (w,h,c) format; metrics expect (c,w,h)
-            gt_image = np.moveaxis(gt_image, -1, 0)
-            render_image = np.moveaxis(render_image, -1, 0)
 
             # Compare, and record results
             psnrs.append(peak_signal_noise_ratio(gt_image, render_image))
-            ssims.append(structural_similarity(gt_image, render_image))
+            ssims.append(structural_similarity(gt_image, render_image, channel_axis=2))
             mses.append(mean_squared_error(gt_image, render_image))
 
     # Write results to the output file
