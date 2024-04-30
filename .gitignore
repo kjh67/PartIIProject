@@ -159,10 +159,8 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-nvs_from_video/extract_frames.py
 renderer/gauss360*
 game/gauss360*
 colmap/build
-TEST*
 
 .VSCodeCounter*
