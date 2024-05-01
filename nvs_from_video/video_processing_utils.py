@@ -115,11 +115,9 @@ def train_test_split(source_directory, train_proportion=0.8):
     # For NeRF; rename images with train_ and eval_ prefixes in colmap data, and save renames images in destination
     source_image_directory = os.path.join(source_directory, "frames")
     for imageid in train_images.keys():
-        images[imageid].name = "train_" + images[imageid].name
-        shutil.copy(os.path.join(source_image_directory, train_images[imageid].name), os.path.join(nerf_image_destination, images[imageid].name))
+        shutil.copy(os.path.join(source_image_directory, train_images[imageid].name), os.path.join(nerf_image_destination, "train_" + images[imageid].name))
     for imageid in test_images.keys():
-        images[imageid].name = "test_" + images[imageid].name
-        shutil.copy(os.path.join(source_image_directory, test_images[imageid].name), os.path.join(nerf_image_destination, images[imageid].name))
+        shutil.copy(os.path.join(source_image_directory, test_images[imageid].name), os.path.join(nerf_image_destination, "eval_" + images[imageid].name))
     
     # Write back COLMAP data
     write_images_binary(images, os.path.join(nerf_colmap_destination, "images.bin"))
