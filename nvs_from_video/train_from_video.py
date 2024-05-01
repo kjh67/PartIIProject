@@ -5,7 +5,7 @@ import os
 from nvs_from_video.video_processing_utils import run_preprocessing
 
 
-def process_splat(tgt, eval):
+def process_splat(tgt):
     # run gaussian optimisation, outputting into new folder
     colmap_path = os.path.join(tgt, "splat", "train", "colmap")
     image_path = os.path.join(tgt, "frames")
