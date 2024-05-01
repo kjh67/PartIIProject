@@ -203,23 +203,22 @@ def process_colmap(image_dir, target_dir, args):
         stop_if_failed(feature_extraction)
 
     if not args.skip_colmap_featurematch:
+        print(f"Using GPU: {args.colmap_use_gpu}")
         if args.colmap_exhaustive_match:
             feature_matching_command = ["colmap", "exhaustive_matcher", "--database_path", db_path]
         elif args.colmap_vocabtree_match:
             # if opting to use vocab tree matching, assume that the vocab tree is accessible
             feature_matching_command = ["colmap", "vocab_tree_matcher", "--database_path", db_path, 
-                                        "--VocabTreeMatching.vocab_tree_path", args.colmap_vocabtree_location,
-                                        "--SiftMatching.use_gpu", args.colmap_use_gpu]
+                                        "--VocabTreeMatching.vocab_tree_path", args.colmap_vocabtree_location]
         else:
             # since frames are ordered with overlap between consecutive frames, use sequential feature matching
             feature_matching_command = ["colmap", "sequential_matcher", "--database_path", db_path,
-                                        "--SequentialMatching.overlap", "20",
-                                        "--SiftMatching.use_gpu", args.colmap_use_gpu]
+                                        "--SequentialMatching.overlap", "20"]
             # check to see whether a vocab tree is in the expected place; if so, add loop detection to the feature matching command
             if os.path.isfile(args.colmap_vocabtree_location):
                 feature_matching_command += ["--SequentialMatching.loop_detection", "1",
                                             "--SequentialMatching.vocab_tree_path", args.colmap_vocabtree_location]
-
+        feature_matching_command += ["--SiftMatching.use_gpu", args.colmap_use_gpu]
         feature_matching = subprocess.run(feature_matching_command)
         stop_if_failed(feature_matching)
 
