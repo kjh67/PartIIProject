@@ -127,21 +127,20 @@ def train_test_split(source_directory, train_proportion=0.8):
 def get_next_video(src_list):
     try:
         file = next(src_list)
-        print(file.name)
+        print(f"Processing video: {file.name}")
         if file.name[-4:] == '.mp4':
-            print('making video')
             video = cv2.VideoCapture(file.path)
             return video, src_list
         print('Failed to find mp4')
-    except:
-        print('source list empty')
+    except StopIteration:
+        print('Source list exhausted')
         return None, None
 
 
 def extract_frames(src, tgt, frequency=30):
     """Assumes input video at 30fps, downsampling to one frame per second by default"""
 
-    print("Beginning extraction of frames from video")
+    print("Beginning frame extraction")
 
     # generate mappings from the equirectangular image to pinhole images
     # plus and minus 25deg from level, and plus minus 45 each side
@@ -177,7 +176,6 @@ def extract_frames(src, tgt, frequency=30):
                 video, sources = get_next_video(sources)
                 if video:
                     cont = True
-                    print('Progressed to next video')
 
     cv2.destroyAllWindows()
     print('Frame extraction complete')
@@ -200,7 +198,8 @@ def process_colmap(image_dir, target_dir, args):
         feature_extraction = subprocess.run(["colmap", "feature_extractor",
                                             "--database_path", db_path,
                                             "--image_path", image_dir,
-                                            "--ImageReader.camera_model", "PINHOLE"])
+                                            "--ImageReader.camera_model", "PINHOLE",
+                                            "--SiftExtraction.use_gpu" "0"])
         stop_if_failed(feature_extraction)
 
         if args.colmap_exhaustive_match:
