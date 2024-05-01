@@ -29,12 +29,15 @@ def directory_setup(src, tgt):
         tgt = os.path.join(os.path.dirname(src), os.path.basename(src)+'_output')
     os.makedirs(tgt, exist_ok=True)
 
-    # 1. set up frame extraction folder
+    # 1. set up frame extraction folder, splat folder, nerf folder, results folder
     os.makedirs(os.path.join(tgt, "frames"), exist_ok=True)
+    os.makedirs(os.path.join(tgt, "splat"), exist_ok=True)
+    os.makedirs(os.path.join(tgt, "nerf"), exist_ok=True)
+    os.makedirs(os.path.join(tgt, "results"), exist_ok=True)
     
     # 2. set up colmap output folder, including empty database and sparse folder
-    os.makedirs(os.path.join(tgt, "colmap_output/sparse"), exist_ok=True)
-    with open(os.path.join(tgt, "colmap_output", "database.db"), "w") as _: pass
+    os.makedirs(os.path.join(tgt, "colmap/sparse"), exist_ok=True)
+    with open(os.path.join(tgt, "colmap", "database.db"), "w") as _: pass
 
     return tgt
 
@@ -59,21 +62,18 @@ def retrieve_colmap_information(image_ids, all_images, all_cameras, all_points3D
 
 def train_test_split(source_directory, train_proportion=0.8):
     """Takes an output directory, containing directories 'colmap_output' and 
-    'frames', and creates separate 'train' and 'test' directories"""
+    'frames', and populates 'nerf' and 'splat' direcories with appropritely formatted data"""
 
-    print("Generating training and testing datasets")
-
-    # Make directories: colmap_output/test/sparse/0, and colmap_output/train/sparse/0
-    source_colmap_directory = os.path.join(source_directory, "colmap_output", "sparse", "0")
-    train_colmap_directory = os.path.join(source_directory, "train", "colmap_output", "sparse", "0")
-    test_colmap_directory = os.path.join(source_directory, "test", "colmap_output", "sparse", "0")
-
-    if os.path.exists(train_colmap_directory):
+    if os.path.exists(os.path.join(source_directory, "splat", "train")):
         print("Training and testing sets previously generated")
         return
 
-    os.makedirs(train_colmap_directory)
-    os.makedirs(test_colmap_directory)
+    print("Generating training and testing datasets")
+    source_colmap_directory = os.path.join(source_directory, "colmap", "sparse", "0")
+    splat_train_destination = os.path.join(source_directory, "splat", "train", "colmap", "sparse", "0")
+    splat_eval_destination = os.path.join(source_directory, "splat", "eval", "colmap", "sparse", "0")
+    nerf_colmap_destination = os.path.join(source_directory, "nerf", "colmap", "sparse", "0")
+    nerf_image_destination = os.path.join(source_directory, "nerf", "images")
 
     # Get list of all COLMAPed images; returned as dictionaries
     images = read_images_binary(os.path.join(source_colmap_directory, "images.bin"))
@@ -84,6 +84,7 @@ def train_test_split(source_directory, train_proportion=0.8):
 
     # Take a subset of shuffled images for training, and the rest for testing
     image_ids_shuffled = list(images.keys())
+    np.random.seed(42)
     np.random.shuffle(image_ids_shuffled)
     train_image_ids = image_ids_shuffled[:int(len(image_ids_shuffled)*train_proportion)]
     test_image_ids = image_ids_shuffled[int(len(image_ids_shuffled)*train_proportion):]
@@ -96,32 +97,31 @@ def train_test_split(source_directory, train_proportion=0.8):
         test_image_ids, images, cameras, points3D
     )
 
-    # Write back information to relevant directories
-    write_images_binary(train_images, os.path.join(train_colmap_directory, "images.bin"))
-    write_images_binary(test_images, os.path.join(test_colmap_directory, "images.bin"))
-    write_cameras_binary(train_cameras, os.path.join(train_colmap_directory, "cameras.bin"))
-    write_cameras_binary(test_cameras, os.path.join(test_colmap_directory, "cameras.bin"))
-    write_points3D_binary(train_points3D, os.path.join(train_colmap_directory, "points3D.bin"))
-    write_points3D_binary(test_points3D, os.path.join(test_colmap_directory, "points3D.bin"))
+    # For Gaussian Splatting; write back COLMAP data to the test and eval folders
+    write_images_binary(train_images, os.path.join(splat_train_destination, "images.bin"))
+    write_images_binary(test_images, os.path.join(splat_eval_destination, "images.bin"))
+    write_cameras_binary(train_cameras, os.path.join(splat_train_destination, "cameras.bin"))
+    write_cameras_binary(test_cameras, os.path.join(splat_eval_destination, "cameras.bin"))
+    write_points3D_binary(train_points3D, os.path.join(splat_train_destination, "points3D.bin"))
+    write_points3D_binary(test_points3D, os.path.join(splat_eval_destination, "points3D.bin"))
 
-    print("COLMAP information written")
+    print("Train/Eval sets for Gaussian Splatting generated")
 
-    # Copy images into test and train folders
+    # For NeRF; rename images with train_ and eval_ prefixes in colmap data, and save renames images in destination
     source_image_directory = os.path.join(source_directory, "frames")
-    train_image_directory = os.path.join(source_directory, "train", "images")
-    test_image_directory = os.path.join(source_directory, "test", "images")
+    for imageid in train_images.keys():
+        images[imageid].name = "train_" + images[imageid].name
+        shutil.copy(os.path.join(source_image_directory, train_images[imageid].name), os.path.join(nerf_image_destination, images[imageid].name))
+    for imageid in test_images.keys():
+        images[imageid].name = "test_" + images[imageid].name
+        shutil.copy(os.path.join(source_image_directory, test_images[imageid].name), os.path.join(nerf_image_destination, images[imageid].name))
+    
+    # Write back COLMAP data
+    write_images_binary(images, os.path.join(nerf_colmap_destination, "images.bin"))
+    write_cameras_binary(cameras, os.path.join(nerf_colmap_destination, "cameras.bin"))
+    write_points3D_binary(points3D, os.path.join(nerf_colmap_destination, "points3D.bin"))
 
-    os.mkdir(train_image_directory)
-    os.mkdir(test_image_directory)
-
-    for image in train_image_names:
-        shutil.copy(os.path.join(source_image_directory, image), os.path.join(train_image_directory, image))
-    print("Finished writing images to training directory")
-    for image in test_image_names:
-        shutil.copy(os.path.join(source_image_directory, image), os.path.join(test_image_directory, image))
-    print("Finished writing images to testing directory")
-
-    print("Training and testing datasets generated.")
+    print("Training/Eval sets for NeRFs generated")
 
 
 def get_next_video(src_list):
@@ -207,11 +207,12 @@ def process_colmap(image_dir, target_dir, args):
             feature_matching_command = ["colmap", "exhaustive_matcher", "--database_path", db_path]
         elif args.colmap_vocabtree_match:
             # if opting to use vocab tree matching, assume that the vocab tree is accessible
-            feature_matching_command = ["colmap", "vocab_tree_matcher", "--database_path", db_path, "--VocabTreeMatching.vocab_tree_path", args.colmap_vocabtree_location]
+            feature_matching_command = ["colmap", "vocab_tree_matcher", "--database_path", db_path, 
+                                        "--VocabTreeMatching.vocab_tree_path", args.colmap_vocabtree_location]
         else:
             # since frames are ordered with overlap between consecutive frames, use sequential feature matching
-            feature_matching_command = ["colmap", "sequential_matcher",
-                                            "--database_path", db_path]
+            feature_matching_command = ["colmap", "sequential_matcher", "--database_path", db_path,
+                                        "--SequentialMatching.overlap", "20"]
             # check to see whether a vocab tree is in the expected place; if so, add loop detection to the feature matching command
             if os.path.isfile(args.colmap_vocabtree_location):
                 feature_matching_command += ["--SequentialMatching.loop_detection", "1",
@@ -248,9 +249,8 @@ def run_preprocessing(args):
 
     # run colmap, placing output in the folder set up earlier
     if not args.skip_colmap:
-        process_colmap(os.path.join(tgt, "frames"), os.path.join(tgt, "colmap_output"), args)
+        process_colmap(os.path.join(tgt, "frames"), os.path.join(tgt, "colmap"), args)
 
-    if args.eval:
-        train_test_split(tgt, args.train_proportion)
+    train_test_split(tgt, args.train_proportion)
 
     return tgt

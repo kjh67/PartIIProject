@@ -7,16 +7,13 @@ from nvs_from_video.video_processing_utils import run_preprocessing
 
 def process_splat(tgt, eval):
     # run gaussian optimisation, outputting into new folder
-    if eval:
-        colmap_path = os.path.join(tgt, "train", "colmap_output")
-        image_path = os.path.join(tgt, "train", "images")
-    else:
-        colmap_path = os.path.join(tgt, "colmap_output")
-        image_path = os.path.join(tgt, "frames")
+    colmap_path = os.path.join(tgt, "splat", "train", "colmap")
+    image_path = os.path.join(tgt, "frames")
+    model_path = os.path.join(tgt, "splat")
 
-    splat_processing = subprocess.run(["python", "gaussian-splatting/train.py",
+    splat_processing = subprocess.run(["python", "gaussian_splatting/train.py",
                                        "-s", colmap_path, 
-                                       "-m", tgt,
+                                       "-m", model_path,
                                        "--images", image_path,
                                        "--test_iterations", -1])
     if splat_processing.returncode != 0:
@@ -24,23 +21,16 @@ def process_splat(tgt, eval):
         quit(code=1)
 
 
-def process_nerf(tgt, eval):
-    colmap_path = os.path.join("colmap_output", "sparse", "0")
-    image_path = os.path.join("images")
-    if eval:
-        data_path = os.path.join(tgt, "train")
-    else:
-        data_path = tgt
+def process_nerf(tgt):
+    model_path = os.path.join(tgt, "nerf")
 
     nerf_processing = subprocess.run(["ns-train", "nerfacto",
-                                      "--output-dir", tgt,
+                                      "--output-dir", model_path,
                                       "--viewer.websocket-port", "7007",
                                       "--viewer.make-share-url", "True",
                                       "colmap", 
-                                      "--data", data_path,
-                                      "--images-path", image_path,
-                                      "--colmap-path", colmap_path,
-                                      "--train-split-fraction", "1",
+                                      "--data", model_path,
+                                      "--eval-mode", "filename",
                                       "--downscale-factor", "1"])
     if nerf_processing.returncode != 0:
         print("Error processing NeRF")
@@ -84,10 +74,6 @@ if __name__ == "__main__":
             for 30fps video)."
     )
     parser.add_argument(
-        '--eval', action='store_true',
-        help="Data will be split into separate training and testing sets"
-    )
-    parser.add_argument(
         '--train_proportion', type=float, default=0.8,
         help="Proportion of extracted frames to be used for training (remainder reserved for evaluation)"
     )
@@ -106,6 +92,6 @@ if __name__ == "__main__":
     tgt = run_preprocessing(args)
 
     if args.reconstruction_type == "nerf":
-        process_nerf(tgt, args.eval)
+        process_nerf(tgt)
     elif args.reconstruction_type == "splat":
-        process_splat(tgt, args.eval)
+        process_splat(tgt)
