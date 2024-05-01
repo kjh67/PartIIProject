@@ -65,7 +65,10 @@ if __name__ == "__main__":
             when generating Gaussian Splats if COLMAP output has previously been \
             generated on the source data")
     parser.add_argument(
-        '--colmap_map_only', '-cmo', action='store_true'
+        '--skip_colmap_featureextract', action='store_true'
+    )
+    parser.add_argument(
+        '--skip_colmap_featurematch', action='store_true'
     )
     parser.add_argument(
         '--frame_sample_period', '-fp', type=int, default=30,
@@ -86,6 +89,9 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--colmap_vocabtree_location", type=str, default="./nvs_from_video/vocab_tree.bin"
+    )
+    parser.add_argument(
+        "colmap_use_gpu", action='store_true'
     )
 
     args = parser.parse_args()
