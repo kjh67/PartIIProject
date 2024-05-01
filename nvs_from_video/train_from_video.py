@@ -15,7 +15,7 @@ def process_splat(tgt):
                                        "-s", colmap_path, 
                                        "-m", model_path,
                                        "--images", image_path,
-                                       "--test_iterations", -1])
+                                       "--test_iterations", "-1"])
     if splat_processing.returncode != 0:
         print("Error processing gaussian splat")
         quit(code=1)
