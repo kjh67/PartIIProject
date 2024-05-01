@@ -199,7 +199,7 @@ def process_colmap(image_dir, target_dir, args):
                                             "--database_path", db_path,
                                             "--image_path", image_dir,
                                             "--ImageReader.camera_model", "PINHOLE",
-                                            "--SiftExtraction.use_gpu" "0"])
+                                            "--SiftExtraction.use_gpu", "0"])
         stop_if_failed(feature_extraction)
 
         if args.colmap_exhaustive_match:
