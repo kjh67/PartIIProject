@@ -11,7 +11,7 @@ def process_splat(tgt):
     image_path = os.path.join(tgt, "frames")
     model_path = os.path.join(tgt, "splat")
 
-    splat_processing = subprocess.run(["python", "gaussian_splatting/train.py",
+    splat_processing = subprocess.run(["python", "-m", "gaussian_splatting.train",
                                        "-s", colmap_path, 
                                        "-m", model_path,
                                        "--images", image_path,
