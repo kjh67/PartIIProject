@@ -121,7 +121,7 @@ def train_test_split(source_directory, train_proportion=0.8):
         shutil.copy(os.path.join(source_image_directory, train_images[imageid].name), os.path.join(nerf_image_destination, "train_" + images[imageid].name))
         image_dict_to_write[imageid] = ColmapImageData(id=imageid,
                 qvec=images[imageid].qvec,
-                tvec=images[imageid].qvec,
+                tvec=images[imageid].tvec,
                 camera_id=images[imageid].camera_id,
                 name="train_"+images[imageid].name,
                 xys=images[imageid].xys,
@@ -130,7 +130,7 @@ def train_test_split(source_directory, train_proportion=0.8):
         shutil.copy(os.path.join(source_image_directory, test_images[imageid].name), os.path.join(nerf_image_destination, "eval_" + images[imageid].name))
         image_dict_to_write[imageid] = ColmapImageData(id=imageid,
                 qvec=images[imageid].qvec,
-                tvec=images[imageid].qvec,
+                tvec=images[imageid].tvec,
                 camera_id=images[imageid].camera_id,
                 name="eval_"+images[imageid].name,
                 xys=images[imageid].xys,
