@@ -91,7 +91,7 @@ if __name__ == "__main__":
         "--colmap_vocabtree_location", type=str, default="./nvs_from_video/vocab_tree.bin"
     )
     parser.add_argument(
-        "colmap_use_gpu", action='store_true'
+        "--colmap_use_gpu", action='store_const', const="1", default="0"
     )
 
     args = parser.parse_args()
