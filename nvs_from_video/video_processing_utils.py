@@ -75,6 +75,11 @@ def train_test_split(source_directory, train_proportion=0.8):
     nerf_colmap_destination = os.path.join(source_directory, "nerf", "colmap", "sparse", "0")
     nerf_image_destination = os.path.join(source_directory, "nerf", "images")
 
+    os.makedirs(splat_train_destination, exist_ok=True)
+    os.makedirs(splat_eval_destination, exist_ok=True)
+    os.makedirs(nerf_colmap_destination, exist_ok=True)
+    os.makedirs(nerf_image_destination, exist_ok=True)
+
     # Get list of all COLMAPed images; returned as dictionaries
     images = read_images_binary(os.path.join(source_colmap_directory, "images.bin"))
     cameras = read_cameras_binary(os.path.join(source_colmap_directory, "cameras.bin"))
