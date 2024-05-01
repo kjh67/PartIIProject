@@ -3,6 +3,7 @@ import cv2
 import subprocess
 import numpy as np
 import shutil
+import collections
 
 from nvs_from_video.map_equi_pinhole import map_equi_pinhole
 from colmap.scripts.python.read_write_model \
@@ -10,6 +11,7 @@ from colmap.scripts.python.read_write_model \
         read_images_binary, write_images_binary, \
         read_points3D_binary, write_points3D_binary
 
+ColmapImageData = collections.namedtuple("Image", ["id", "qvec", "tvec", "camera_id", "name", "xys", "point3D_ids"])
 
 class DirectorySetupError(Exception):
     def __init__(self, msg):
@@ -112,15 +114,30 @@ def train_test_split(source_directory, train_proportion=0.8):
 
     print("Train/Eval sets for Gaussian Splatting generated")
 
-    # For NeRF; rename images with train_ and eval_ prefixes in colmap data, and save renames images in destination
+    # For NeRF; rename images with train_ and eval_ prefixes in colmap data, copy renamed images to destination folder
     source_image_directory = os.path.join(source_directory, "frames")
+    image_dict_to_write = {}
     for imageid in train_images.keys():
         shutil.copy(os.path.join(source_image_directory, train_images[imageid].name), os.path.join(nerf_image_destination, "train_" + images[imageid].name))
+        image_dict_to_write[imageid] = ColmapImageData(id=imageid,
+                qvec=images[imageid].qvec,
+                tvec=images[imageid].qvec,
+                camera_id=images[imageid].camera_id,
+                name="train_"+images[imageid].name,
+                xys=images[imageid].xys,
+                point3D_ids=images[imageid].point3D_ids,)
     for imageid in test_images.keys():
         shutil.copy(os.path.join(source_image_directory, test_images[imageid].name), os.path.join(nerf_image_destination, "eval_" + images[imageid].name))
+        image_dict_to_write[imageid] = ColmapImageData(id=imageid,
+                qvec=images[imageid].qvec,
+                tvec=images[imageid].qvec,
+                camera_id=images[imageid].camera_id,
+                name="eval_"+images[imageid].name,
+                xys=images[imageid].xys,
+                point3D_ids=images[imageid].point3D_ids,)
     
     # Write back COLMAP data
-    write_images_binary(images, os.path.join(nerf_colmap_destination, "images.bin"))
+    write_images_binary(image_dict_to_write, os.path.join(nerf_colmap_destination, "images.bin"))
     write_cameras_binary(cameras, os.path.join(nerf_colmap_destination, "cameras.bin"))
     write_points3D_binary(points3D, os.path.join(nerf_colmap_destination, "points3D.bin"))
 
