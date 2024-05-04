@@ -28,7 +28,7 @@ def process_nerf(tgt):
     nerf_processing = subprocess.run(["ns-train", "nerfacto",
                                       "--output-dir", model_path,
                                       "--steps-per-save", "5000",
-                                      "--save-only-last-checkpoint", "False",
+                                      "--save-only-latest-checkpoint", "False",
                                       "--viewer.websocket-port", "7007",
                                       "--viewer.make-share-url", "True",
                                       "colmap", 
