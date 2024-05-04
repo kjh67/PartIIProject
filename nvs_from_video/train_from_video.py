@@ -29,6 +29,7 @@ def process_nerf(tgt):
                                       "--output-dir", model_path,
                                       "--steps-per-save", "5000",
                                       "--save-only-latest-checkpoint", "False",
+                                      "--logging.steps-per-log", "100",
                                       "--viewer.websocket-port", "7007",
                                       "--viewer.make-share-url", "True",
                                       "colmap", 
