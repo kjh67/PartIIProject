@@ -15,7 +15,8 @@ def process_splat(tgt):
                                        "-s", colmap_path, 
                                        "-m", model_path,
                                        "--images", image_path,
-                                       "--test_iterations", "-1"])
+                                       "--test_iterations", "-1",
+                                       "--save_iterations", "5000", "7000", "10000", "15000", "20000", "25000", "30000"])
     if splat_processing.returncode != 0:
         print("Error processing gaussian splat")
         quit(code=1)
@@ -26,6 +27,8 @@ def process_nerf(tgt):
 
     nerf_processing = subprocess.run(["ns-train", "nerfacto",
                                       "--output-dir", model_path,
+                                      "--steps-per-save", "5000",
+                                      "--save-only-last-checkpoint", "False",
                                       "--viewer.websocket-port", "7007",
                                       "--viewer.make-share-url", "True",
                                       "colmap", 
