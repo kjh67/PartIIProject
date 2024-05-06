@@ -21,7 +21,7 @@ class SplatModelParameters():
         self.sh_degree = 3
         self.source_path = colmap_source_path
         self.model_path = model_path
-        self.image_path = image_path
+        self.images = image_path
         self.resolution = -1
         self.white_background = False
         self.data_device = "cuda"
