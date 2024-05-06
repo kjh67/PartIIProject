@@ -93,7 +93,7 @@ def eval_nerfs(project_dir, iterations):
         render_command = ["ns-render", "dataset", "--load_config", os.path.join(config_path, "config.yml"), "--output_path", output_path]
         subprocess.run(render_command)
         print("Rendering complete")
-        calculate_metrics("nerf", iteration, os.path.join(project_dir, "nerf", "images"), os.path.join(output_path, "rgb"), os.path.join(project_dir, "results", "render_metrics"))
+        calculate_metrics("nerf", iteration, os.path.join(project_dir, "nerf", "images"), os.path.join(output_path, "test", "rgb"), os.path.join(project_dir, "results", "render_metrics"))
 
 
 def calculate_metrics(mode, iteration, gt_folder, render_folder, output_folder):
