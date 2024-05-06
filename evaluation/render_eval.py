@@ -88,6 +88,7 @@ def eval_nerfs(project_dir, iterations):
     
         print(f"Rendering nerf iteration {iteration}")
         output_path = os.path.join(project_dir, "results", "renders", f"nerf{iteration}")
+        os.makedirs(output_path, exist_ok=True)
         render_command = ["ns-render", "dataset", "--load_config", os.path.join(config_path, "config.yml"), "--output_path", output_path]
         subprocess.run(render_command)
         print("Rendering complete")
