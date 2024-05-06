@@ -97,11 +97,13 @@ def eval_nerfs(project_dir, iterations):
 
 def calculate_metrics(mode, iteration, gt_folder, render_folder, output_folder):
     """Assumes that the ground truth and render images to be compared have the same names"""
+    os.makedirs(output_folder, exist_ok=True)
 
     psnrs = []
     ssims = []
     mses = []
 
+    print("Calculating image metrics")
     with os.scandir(render_folder) as images:
         for image in images:
             # Load rendered image
