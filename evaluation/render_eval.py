@@ -125,7 +125,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument("target_folders", nargs="+", help="Project folders to search for trained models")
-    parser.add_argument("--iterations_to_evaluate", nargs="+", type=int, default=30000,
+    parser.add_argument("--iterations_to_evaluate", nargs="+", default=[30000],
                         help="Specify which iteration to generate renders (and metrics) for")
     parser.add_argument("--skip_nerfs", action='store_true')
     parser.add_argument("--skip_splats", action='store_true')
