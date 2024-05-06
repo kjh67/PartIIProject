@@ -15,7 +15,7 @@ class ModelMetrics():
         filename = f"{self.modeltype}{self.iteration}_metrics.txt"
         with open(os.path.join(output_folder, filename), "w") as f:
             f.write(self.modeltype + '\n')
-            f.write(self.iteration + '\n')
+            f.write(str(self.iteration) + '\n')
             f.write(",".join(str(psnr) for psnr in self.psnrs) + '\n')
             f.write(",".join(str(ssim) for ssim in self.ssims) + '\n')
             f.write(",".join(str(mse) for mse in self.mses))
