@@ -137,5 +137,5 @@ if __name__ == "__main__":
             if os.path.exists(os.path.join(target, "nerf")):
                 eval_nerfs(target, args.iterations_to_evaluate)
         if not args.skip_splats:
-            if os.path.exist(os.path.join(target, "splat")):
+            if os.path.exists(os.path.join(target, "splat")):
                 eval_splats_cuda(target, args.iterations_to_evaluate)
