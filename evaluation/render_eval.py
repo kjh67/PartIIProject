@@ -84,7 +84,7 @@ def eval_nerfs(project_dir, iterations):
         # locate folder where the config.yml file will be located
         path_top = os.path.join(project_dir, "nerf", "unnamed", "nerfacto")
         with os.scandir(path_top) as f:
-            timestamp_folder = f[0]
+            timestamp_folder = next(f)
         config_path = os.path.join(path_top, timestamp_folder)
     
         print(f"Rendering nerf iteration {iteration}")
