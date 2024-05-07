@@ -53,11 +53,12 @@ def plot_all_metrics(source_dirs, output_dir, data_labels, group_labels):
     metric_sets = []
     for source_location in source_dirs:
         metric_sets += ModelMetrics.load_metrics(os.path.join(source_location, "results", "render_metrics"))
-    print(metric_sets)
+
     num_groups = len(group_labels)
-    psnrs = np.array([[data.psnrs] for data in metric_sets]).reshape((num_groups, int(len(metric_sets)/num_groups)))
-    ssims = np.array([[data.ssims] for data in metric_sets]).reshape((num_groups, int(len(metric_sets)/num_groups)))
-    mses = np.array([[data.mses] for data in metric_sets]).reshape((num_groups, int(len(metric_sets)/num_groups)))
+    num_datapoints = len(metric_sets[0].psnrs)
+    psnrs = np.array([[data.psnrs] for data in metric_sets]).reshape((num_groups, int(len(metric_sets)/num_groups), num_datapoints))
+    ssims = np.array([[data.ssims] for data in metric_sets]).reshape((num_groups, int(len(metric_sets)/num_groups), num_datapoints))
+    mses = np.array([[data.mses] for data in metric_sets]).reshape((num_groups, int(len(metric_sets)/num_groups), num_datapoints))
     
     plot_metrics(psnrs, data_labels, group_labels, "PSNR", os.path.join(output_dir, "psnrs.png"))
     plot_metrics(ssims, data_labels, group_labels, "SSIM", os.path.join(output_dir, "ssims.png"))
