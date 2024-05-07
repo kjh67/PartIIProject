@@ -8,7 +8,7 @@ from evaluation.eval_utils import ModelMetrics, get_means_and_confidence, read_r
 
 def plot_violin(data, data_labels, y_label, output_file):
     fig, ax = plt.subplots()
-    fig.set_size_inches(len(data_labels), 0.6*len(data_labels))
+    fig.set_size_inches(2*len(data_labels), 1.2*len(data_labels))
     tick_positions = np.arange(len(data))
     violins = ax.violinplot(data, tick_positions, showmedians=True, showextrema=True)
 
