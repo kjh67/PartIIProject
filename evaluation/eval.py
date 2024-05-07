@@ -83,11 +83,7 @@ def eval_nerfs(project_dir, iterations, skip_rendering):
         print(f"Evaluating NeRF iteration {iteration}")
         output_path = os.path.join(project_dir, "results", "renders", f"nerf{iteration}")
         if not skip_rendering:
-            # locate folder where the config.yml file will be located
-            path_top = os.path.join(project_dir, "nerf", "unnamed", "nerfacto")
-            with os.scandir(path_top) as f:
-                timestamp_folder = next(f)
-            config_path = os.path.join(path_top, timestamp_folder)
+            config_path = os.path.join(project_dir, "nerf", "nerfacto")
             print(f"Starting rendering")
             os.makedirs(output_path, exist_ok=True)
             render_command = ["ns-render", "dataset", "--load_config", os.path.join(config_path, "config.yml"), "--output_path", output_path, "--rendered-output-names", "rgb"]
