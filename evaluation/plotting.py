@@ -9,13 +9,14 @@ from evaluation.eval_utils import ModelMetrics, get_means_and_confidence, read_r
 def plot_violin(data, data_labels, y_label, output_file):
     fig, ax = plt.subplots()
     tick_positions = np.arange(len(data))
-    violins = ax.violinplot(data, showmedians=True, showextrema=True)
+    violins = ax.violinplot(data, tick_positions, showmedians=True, showextrema=True)
 
     # Format axis labels
     ax.get_xaxis().set_visible(False)
     ax.set_ylabel(y_label)
     ax.set_ylim(0)
     ax.set_xticks(tick_positions, data_labels)
+    ax.legend()
 
     fig.savefig(output_file)
     plt.show()
