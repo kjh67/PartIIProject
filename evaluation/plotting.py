@@ -35,7 +35,7 @@ def plot_metrics(plot_data, data_labels, group_labels, y_axis_label, output_path
         for data_index, data_item in enumerate(group_data):
             mean, lower_conf, upper_conf = get_means_and_confidence(data_item, 0.95)
             print(mean, lower_conf, upper_conf)
-            databar = ax.bar(offset_multiplier*bar_width, mean, xerr=mean-lower_conf, yerr=upper_conf-mean, label=data_labels[data_index])
+            databar = ax.bar(offset_multiplier*bar_width, mean, bar_width, xerr=mean-lower_conf, yerr=upper_conf-mean, label=data_labels[data_index])
             offset_multiplier += 1
         offset_multiplier += 1
 
