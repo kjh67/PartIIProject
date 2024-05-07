@@ -29,25 +29,18 @@ def plot_metrics(plot_data, data_labels, group_labels, y_axis_label, output_path
     group_positions = np.arange(len(group_labels))
     bar_width = 1 / (len(data_labels) + 1)
 
-    # # Add bars to the figure for each data item
-    # for group_data in plot_data:
-    #     for data_index, [mean, lower_conf, upper_conf] in enumerate(group_data):
-    #         print(mean, lower_conf, upper_conf)
-    #         databar = ax.bar(offset_multiplier*bar_width, mean, bar_width, xerr=mean-lower_conf, yerr=upper_conf-mean, label=data_labels[data_index])
-    #         offset_multiplier += 1
-    #     offset_multiplier += 1
-
     # Add bars for each data item within groups
     for data_index, data_label in enumerate(data_labels):
         offset = bar_width * data_index
         means = plot_data[:,data_index,0]
-        errors = plot_data[:,data_index,1:]
-        bars = ax.bar(group_positions + offset, plot_data[:,data_index,0], bar_width, xerr=errors, label=data_label)
+        conf_intervals = plot_data[:,data_index,1:]
+        print(conf_intervals)
+        bars = ax.bar(group_positions + offset, means, bar_width, yerr=conf_intervals, label=data_label)
         ax.bar_label(bars, padding=3)
 
     # Add chart labels, legend etc
     ax.set_ylabel(y_axis_label)
-    ax.set_xticks(group_positions, group_labels)
+    ax.set_xticks(group_positions + bar_width, group_labels)
     ax.set_xbound(0, len(data_labels))
     ax.legend(loc='upper right')
 
