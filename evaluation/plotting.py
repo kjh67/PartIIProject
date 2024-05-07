@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from argparse import ArgumentParser
 
-from eval_utils import ModelMetrics, get_means_and_confidence, read_reprojection_errors
+from evaluation.eval_utils import ModelMetrics, get_means_and_confidence, read_reprojection_errors
 
 
 def plot_violin(data, data_labels, y_label, output_file):
