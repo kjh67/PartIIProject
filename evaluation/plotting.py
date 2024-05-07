@@ -7,23 +7,22 @@ from evaluation.eval_utils import ModelMetrics, get_means_and_confidence, read_r
 
 
 def plot_violin(data, data_labels, y_label, output_file):
-
-    # Plot the data
     fig, ax = plt.subplots()
-    ax.violinplot(data, showmeans=True, showmedians=True)
+    tick_positions = np.arange(len(data))
+    violins = ax.violinplot(data, showmedians=True, showextrema=True)
 
     # Format axis labels
     ax.get_xaxis().set_visible(False)
     ax.set_ylabel(y_label)
-
-    # Add legend
+    ax.set_ylim(0)
+    ax.set_xticks(tick_positions, data_labels)
 
     fig.savefig(output_file)
     plt.show()
 
 
 def plot_metrics(plot_data, data_labels, group_labels, y_axis_label, output_path):
-    # plot_data will be an nxm array, where n is the group size and m is the number of bars per group
+    # Plot_data will be an nxm array, where n is the group size and m is the number of bars per group
     fig, ax = plt.subplots()
 
     group_positions = np.arange(len(group_labels))
@@ -36,7 +35,7 @@ def plot_metrics(plot_data, data_labels, group_labels, y_axis_label, output_path
         conf_lower = means - plot_data[:,data_index,1]
         conf_upper = plot_data[:,data_index,2] - means
         print(conf_lower, conf_upper)
-        bars = ax.bar(group_positions + offset, means, bar_width, yerr=(conf_lower, conf_upper), capsize=20, label=data_label)
+        bars = ax.bar(group_positions + offset, means, bar_width, yerr=(conf_lower, conf_upper), capsize=10, label=data_label)
         ax.bar_label(bars, padding=2)
 
     # Add chart labels, legend etc
