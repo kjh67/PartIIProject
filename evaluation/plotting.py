@@ -12,7 +12,6 @@ def plot_violin(data, data_labels, y_label, output_file):
     violins = ax.violinplot(data, tick_positions, showmedians=True, showextrema=True)
 
     # Format axis labels
-    ax.get_xaxis().set_visible(False)
     ax.set_ylabel(y_label)
     ax.set_ylim(0)
     ax.set_xticks(tick_positions, data_labels)
