@@ -75,15 +75,14 @@ if __name__ == "__main__":
     parser = ArgumentParser("Script for plotting results of NVS training and COLMAP pose estimation")
 
     parser.add_argument("mode", choices=["renders", "colmap"])
-    parser.add_argument("source_directories", nargs="+")
-    parser.add_argument("output_directory")
+    parser.add_argument("--source_directories", nargs="+", required=True)
+    parser.add_argument("--output_directory", required=True)
     parser.add_argument("--data_labels", nargs="+")
-    parser.add_argument("--num_groups", default=2)
     parser.add_argument("--group_labels", nargs="+")
 
     args = parser.parse_args()
 
     if args.mode == "renders":
-        plot_all_metrics(args.source_directories, args.output_directory, args.data_labels, args.num_groups, args.group_labels)
+        plot_all_metrics(args.source_directories, args.output_directory, args.data_labels, args.group_labels)
     else:
         plot_colmap(args.source_directories, args.output_directory, args.data_labels)
