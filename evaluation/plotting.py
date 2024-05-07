@@ -32,8 +32,7 @@ def plot_metrics(plot_data, data_labels, group_labels, y_axis_label, output_path
 
     # Add bars to the figure for each data item
     for group_data in plot_data:
-        for data_index, data_item in enumerate(group_data):
-            mean, lower_conf, upper_conf = get_means_and_confidence(data_item, 0.95)
+        for data_index, [mean, lower_conf, upper_conf] in enumerate(group_data):
             print(mean, lower_conf, upper_conf)
             databar = ax.bar(offset_multiplier*bar_width, mean, bar_width, xerr=mean-lower_conf, yerr=upper_conf-mean, label=data_labels[data_index])
             offset_multiplier += 1
@@ -56,14 +55,13 @@ def plot_all_metrics(source_dirs, output_dir, data_labels, group_labels):
         metric_sets += ModelMetrics.load_metrics(os.path.join(source_location, "results", "render_metrics"))
 
     num_groups = len(group_labels)
-    num_datapoints = len(metric_sets[0].psnrs)
-    psnrs = np.array([[data.psnrs] for data in metric_sets]).reshape((num_groups, int(len(metric_sets)/num_groups), num_datapoints))
-    ssims = np.array([[data.ssims] for data in metric_sets]).reshape((num_groups, int(len(metric_sets)/num_groups), num_datapoints))
-    mses = np.array([[data.mses] for data in metric_sets]).reshape((num_groups, int(len(metric_sets)/num_groups), num_datapoints))
+    psnr_to_plot = np.array([[get_means_and_confidence(data.psnrs)] for data in metric_sets]).reshape((num_groups, int(len(metric_sets)/num_groups), 3))
+    ssim_to_plot = np.array([[get_means_and_confidence(data.ssims)] for data in metric_sets]).reshape((num_groups, int(len(metric_sets)/num_groups), 3))
+    mse_to_plot = np.array([[get_means_and_confidence(data.mses)] for data in metric_sets]).reshape((num_groups, int(len(metric_sets)/num_groups), 3))
     
-    plot_metrics(psnrs, data_labels, group_labels, "PSNR", os.path.join(output_dir, "psnrs.png"))
-    plot_metrics(ssims, data_labels, group_labels, "SSIM", os.path.join(output_dir, "ssims.png"))
-    plot_metrics(mses, data_labels, group_labels, "MSE", os.path.join(output_dir, "mses.png"))
+    plot_metrics(psnr_to_plot, data_labels, group_labels, "PSNR", os.path.join(output_dir, "psnrs.png"))
+    plot_metrics(ssim_to_plot, data_labels, group_labels, "SSIM", os.path.join(output_dir, "ssims.png"))
+    plot_metrics(mse_to_plot, data_labels, group_labels, "MSE", os.path.join(output_dir, "mses.png"))
 
 
 def plot_colmap(source_directories, output_directory, data_labels):
