@@ -27,8 +27,6 @@ def process_nerf(tgt):
 
     nerf_processing = subprocess.run(["ns-train", "nerfacto",
                                       "--output-dir", model_path,
-                                      "--experiment-name", "",
-                                      "--timestamp", "",
                                       "--steps-per-save", "5000",
                                       "--max-num-iterations", "30001",
                                       "--save-only-latest-checkpoint", "False",
