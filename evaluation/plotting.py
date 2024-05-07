@@ -41,7 +41,6 @@ def plot_metrics(plot_data, data_labels, group_labels, y_axis_label, output_path
     # Add chart labels, legend etc
     ax.set_ylabel(y_axis_label)
     ax.set_xticks(group_positions + bar_width, group_labels)
-    ax.set_xbound(0, len(data_labels))
     ax.legend(loc='upper right')
 
     plt.show()
