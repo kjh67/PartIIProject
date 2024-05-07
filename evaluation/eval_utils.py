@@ -2,6 +2,8 @@ import os
 import numpy as np
 from scipy.stats import t as t_distribution
 
+from colmap.scripts.python.read_write_model import read_points3D_binary
+
 
 class ModelMetrics():
     def __init__(self, model, iteration, psnrs, ssims, mses):
@@ -35,12 +37,27 @@ class ModelMetrics():
                 metrics.append(modelmetrics)
         return metrics 
 
-def get_means_and_confidence(data):
-    """Returns the mean and 95% confidence intervals for the provided array of data"""
+
+def get_means_and_confidence(data, confidence=0.95):
+    """Returns the mean and confidence intervals for the provided array of data.
+    
+    Return values are, in order: mean, lower interval, upper interval.
+    If no confidence is provided, 95% intervals will be calculated"""
 
     mean = np.mean(data)
     standard_deviation = np.std(data, ddof=1)
     n = len(data)
-    lower, upper = t_distribution.interval(0.95, n, mean, standard_deviation/np.sqrt(n))
+    lower, upper = t_distribution.interval(confidence, n, mean, standard_deviation/np.sqrt(n))
 
     return mean, lower, upper
+
+def read_reprojection_errors(directory_path):
+    """Accepts a path to a COLMAP output directory, and returns a list containing the reprojection errors of 3D points. 
+    
+    Will return an empty list if the directory does not exist, or if an error occurs when reading COLMAP data"""
+    full_path = os.path.join(directory_path, 'sparse', '0')
+    errors = []
+    if os.path.exists(full_path):
+        points = read_points3D_binary(os.path.join(full_path, "points3D.bin"))
+        errors = [points[point].error for point in points]
+    return errors

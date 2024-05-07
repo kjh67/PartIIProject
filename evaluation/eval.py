@@ -42,9 +42,10 @@ def eval_splats_cuda(project_dir, iterations, skip_rendering):
                                        os.path.join(project_dir, "frames"))
 
     for iteration in iterations:
+        print(f"Evaluating splat iteration {iteration}")
         output_path = os.path.join(project_dir, "results", "renders", f"splat{iteration}")
         if not skip_rendering:
-            print(f"Rendering splat iteration {iteration}")
+            print(f"Starting rendering")
             with torch.no_grad():
                 gaussians = GaussianModel(modelparams.sh_degree)
                 test_scene = Scene(modelparams, gaussians, load_iteration=iteration, shuffle=False)
@@ -79,6 +80,7 @@ def render_colmap_dir_splat_openGL(ply_path, colmap_source_path, output_path):
 
 def eval_nerfs(project_dir, iterations, skip_rendering):
     for iteration in iterations:
+        print(f"Evaluating NeRF iteration {iteration}")
         output_path = os.path.join(project_dir, "results", "renders", f"nerf{iteration}")
         if not skip_rendering:
             # locate folder where the config.yml file will be located
@@ -86,7 +88,7 @@ def eval_nerfs(project_dir, iterations, skip_rendering):
             with os.scandir(path_top) as f:
                 timestamp_folder = next(f)
             config_path = os.path.join(path_top, timestamp_folder)
-            print(f"Rendering nerf iteration {iteration}")
+            print(f"Starting rendering")
             os.makedirs(output_path, exist_ok=True)
             render_command = ["ns-render", "dataset", "--load_config", os.path.join(config_path, "config.yml"), "--output_path", output_path, "--rendered-output-names", "rgb"]
             subprocess.run(render_command)
@@ -115,6 +117,10 @@ def calculate_metrics(mode, iteration, gt_folder, render_folder, output_folder):
             psnrs.append(peak_signal_noise_ratio(gt_image, render_image))
             ssims.append(structural_similarity(gt_image, render_image, channel_axis=2))
             mses.append(mean_squared_error(gt_image, render_image))
+
+    print(f"Mean PSNR: {np.mean(psnrs)}")
+    print(f"Mean SSIM: {np.mean(ssims)}")
+    print(f"Mean MSE: {np.mean(mses)}")
 
     metrics = ModelMetrics(mode, iteration, psnrs, ssims, mses)
     metrics.save_metrics(output_folder)
