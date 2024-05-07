@@ -36,7 +36,7 @@ def plot_metrics(plot_data, data_labels, group_labels, y_axis_label, output_path
         conf_lower = means - plot_data[:,data_index,1]
         conf_upper = plot_data[:,data_index,2] - means
         print(conf_lower, conf_upper)
-        bars = ax.bar(group_positions + offset, means, bar_width, yerr=(conf_lower, conf_upper), label=data_label)
+        bars = ax.bar(group_positions + offset, means, bar_width, yerr=(conf_lower, conf_upper), capsize=20, label=data_label)
         ax.bar_label(bars, padding=2)
 
     # Add chart labels, legend etc
@@ -60,9 +60,9 @@ def plot_all_metrics(source_dirs, output_dir, data_labels, group_labels):
     ssim_to_plot = np.array([[get_means_and_confidence(data.ssims)] for data in metric_sets]).reshape((num_groups, int(len(metric_sets)/num_groups), 3))
     mse_to_plot = np.array([[get_means_and_confidence(data.mses)] for data in metric_sets]).reshape((num_groups, int(len(metric_sets)/num_groups), 3))
     
-    plot_metrics(psnr_to_plot, data_labels, group_labels, "PSNR", os.path.join(output_dir, "psnrs.png"))
-    plot_metrics(ssim_to_plot, data_labels, group_labels, "SSIM", os.path.join(output_dir, "ssims.png"))
-    plot_metrics(mse_to_plot, data_labels, group_labels, "MSE", os.path.join(output_dir, "mses.png"))
+    plot_metrics(psnr_to_plot, data_labels, group_labels, "Peak Signal-to-Noise Ratio", os.path.join(output_dir, "psnrs.png"))
+    plot_metrics(ssim_to_plot, data_labels, group_labels, "Structural Similarity", os.path.join(output_dir, "ssims.png"))
+    plot_metrics(mse_to_plot, data_labels, group_labels, "Mean Squared Error", os.path.join(output_dir, "mses.png"))
 
 
 def plot_colmap(source_directories, output_directory, data_labels):
