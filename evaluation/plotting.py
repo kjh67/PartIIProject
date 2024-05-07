@@ -15,7 +15,6 @@ def plot_violin(data, data_labels, y_label, output_file):
     ax.set_ylabel(y_label)
     ax.set_ylim(0)
     ax.set_xticks(tick_positions, data_labels)
-    ax.legend()
 
     fig.savefig(output_file)
     plt.show()
