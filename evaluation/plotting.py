@@ -24,7 +24,7 @@ def plot_violin(data, data_labels, y_label, output_file):
 
 def plot_metrics(plot_data, data_labels, group_labels, y_axis_label, output_path):
     # plot_data will be an nxm array, where n is the group size and m is the number of bars per group
-    fig, ax = plt.subsplots()
+    fig, ax = plt.subplots()
 
     group_positions = np.arange(len(group_labels))
     bar_width = 1 / (len(data_labels) + 1)
