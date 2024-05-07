@@ -33,13 +33,15 @@ def plot_metrics(plot_data, data_labels, group_labels, y_axis_label, output_path
     for data_index, data_label in enumerate(data_labels):
         offset = bar_width * data_index
         means = plot_data[:,data_index,0]
-        conf_intervals = plot_data[:,data_index,1:]
-        print(conf_intervals)
-        bars = ax.bar(group_positions + offset, means, bar_width, yerr=conf_intervals, label=data_label)
+        conf_lower = means - plot_data[:,data_index,1]
+        conf_upper = plot_data[:,data_index,2] - means
+        print(conf_lower, conf_upper)
+        bars = ax.bar(group_positions + offset, means, bar_width, yerr=(conf_lower, conf_upper), label=data_label)
         ax.bar_label(bars, padding=3)
 
     # Add chart labels, legend etc
     ax.set_ylabel(y_axis_label)
+    ax.set_ylim(0)
     ax.set_xticks(group_positions + bar_width, group_labels)
     ax.legend(loc='upper right')
 
