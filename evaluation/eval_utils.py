@@ -28,7 +28,7 @@ class ModelMetrics():
         metrics = []
         for file in os.listdir(source_folder):
             if file.endswith(".txt"):
-                with open(file, "r") as f:
+                with open(os.path.join(source_folder, file), "r") as f:
                     lines = f.readlines()
                     psnrs = np.array([float(psnr) for psnr in lines[2].split(",")])
                     ssims = np.array([float(ssim) for ssim in lines[3].split(",")])
