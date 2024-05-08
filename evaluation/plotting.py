@@ -42,7 +42,7 @@ def plot_metrics(plot_data, data_labels, group_labels, y_axis_label, output_path
     ax.set_ylabel(y_axis_label)
     ax.set_ylim(0)
     ax.set_xticks(group_positions + bar_width*(len(data_labels)-1)/2, group_labels)
-    ax.legend(loc='lower right')
+    ax.legend(bbox_to_anchor = (1.25, 0.6), loc='center right')
 
     plt.show()
     fig.savefig(output_path)
@@ -53,8 +53,6 @@ def plot_all_metrics(source_dirs, output_dir, data_labels, group_labels):
     metric_sets = []
     for source_location in source_dirs:
         metric_sets += ModelMetrics.load_metrics(os.path.join(source_location, "results", "render_metrics"))
-    model_order = [model.modeltype for model in metric_sets]
-    print(model_order)
     num_groups = len(group_labels)
     psnr_to_plot = np.array([[get_means_and_confidence(data.psnrs)] for data in metric_sets]).reshape((num_groups, int(len(metric_sets)/num_groups), 3))
     ssim_to_plot = np.array([[get_means_and_confidence(data.ssims)] for data in metric_sets]).reshape((num_groups, int(len(metric_sets)/num_groups), 3))
