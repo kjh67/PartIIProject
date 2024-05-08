@@ -53,7 +53,8 @@ def plot_all_metrics(source_dirs, output_dir, data_labels, group_labels):
     metric_sets = []
     for source_location in source_dirs:
         metric_sets += ModelMetrics.load_metrics(os.path.join(source_location, "results", "render_metrics"))
-
+    model_order = [model.modeltype for model in metric_sets]
+    print(model_order)
     num_groups = len(group_labels)
     psnr_to_plot = np.array([[get_means_and_confidence(data.psnrs)] for data in metric_sets]).reshape((num_groups, int(len(metric_sets)/num_groups), 3))
     ssim_to_plot = np.array([[get_means_and_confidence(data.ssims)] for data in metric_sets]).reshape((num_groups, int(len(metric_sets)/num_groups), 3))
