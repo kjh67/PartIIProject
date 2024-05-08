@@ -24,7 +24,9 @@ class ModelMetrics():
 
     @staticmethod
     def load_metrics(source_folder):
-        """Returns an array of ModelMetrics objects, containing all metrics saved in the source folder"""
+        """Returns an array of ModelMetrics objects, containing all metrics saved in the source folder
+        
+        The returned array will always contain splat metrics first"""
         metrics = []
         for file in os.listdir(source_folder):
             if file.endswith(".txt"):
@@ -34,7 +36,10 @@ class ModelMetrics():
                     ssims = np.array([float(ssim) for ssim in lines[3].split(",")])
                     mses = np.array([float(mse) for mse in lines[4].split(",")])
                     modelmetrics = ModelMetrics(lines[0], int(lines[1]), psnrs, ssims, mses)
-                metrics.append(modelmetrics)
+                if file.startswith("nerf"):
+                    metrics += modelmetrics
+                else:
+                    metrics = modelmetrics + metrics
         return metrics 
 
 
