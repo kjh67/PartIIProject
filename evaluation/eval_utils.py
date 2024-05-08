@@ -37,9 +37,9 @@ class ModelMetrics():
                     mses = np.array([float(mse) for mse in lines[4].split(",")])
                     modelmetrics = ModelMetrics(lines[0], int(lines[1]), psnrs, ssims, mses)
                 if file.startswith("nerf"):
-                    metrics += modelmetrics
+                    metrics += [modelmetrics]
                 else:
-                    metrics = modelmetrics + metrics
+                    metrics = [modelmetrics] + metrics
         return metrics 
 
 
