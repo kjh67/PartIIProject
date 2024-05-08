@@ -43,7 +43,7 @@ def plot_metrics(plot_data, data_labels, group_labels, y_axis_label, output_path
     ax.set_ylim(0)
     ax.set_xticks(group_positions + bar_width*(len(data_labels)-1)/2, group_labels)
     ax.legend(bbox_to_anchor = (1.05, 0.5), loc='center left')
-    fig.set_size_inches((7,4))
+    fig.set_size_inches((8,5))
     plt.tight_layout()
     plt.show()
     fig.savefig(output_path)
