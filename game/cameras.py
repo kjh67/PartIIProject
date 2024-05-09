@@ -1,10 +1,43 @@
+from abc import ABC, abstractmethod
 import pygame
 import numpy as np
 
 from game.matrix_utils import generate_movement_axes_from_colmap, get_rotation_about_axis
 
 
-class PlayerCamera():
+class Camera(ABC):
+    @abstractmethod
+    def __init__(self):
+        pass
+        
+    @abstractmethod
+    def update(self, keyspressed, timedelta):
+        pass
+
+    @abstractmethod
+    def get_modelview():
+        pass
+
+    def _rotate_x(self, theta):
+        return np.array([[1,0,0,0],
+                        [0,np.cos(theta), -np.sin(theta), 0],
+                        [0, np.sin(theta), np.cos(theta), 0],
+                        [0,0,0,1]])
+
+    def _rotate_y(self, theta):
+        return np.array([[np.cos(theta), 0, np.sin(theta), 0],
+                        [0,1,0,0],
+                        [-np.sin(theta), 0, np.cos(theta), 0],
+                        [0,0,0,1]])
+
+    def _rotate_z(self, theta):
+        return np.array([[np.cos(theta), -np.sin(theta), 0, 0],
+                        [np.sin(theta), np.cos(theta), 0, 0],
+                        [0,0,1,0],
+                        [0,0,0,1]])
+
+
+class PlayerCamera(Camera):
 
     def __init__(self, colmap_path=None):
         # Model matrix used to align axes with those of the street
@@ -77,20 +110,34 @@ class PlayerCamera():
         camera_rotation = self.alignment_rotation @ self.camera_roll_rotation @ self.camera_pitch_rotation @ self.camera_yaw_rotation
         return camera_rotation @ self.camera_translation @ np.array([[-1,0,0,0],[0,-1,0,0],[0,0,1,0],[0,0,0,1]])
 
-    def _rotate_x(self, theta):
-        return np.array([[1,0,0,0],
-                        [0,np.cos(theta), -np.sin(theta), 0],
-                        [0, np.sin(theta), np.cos(theta), 0],
-                        [0,0,0,1]])
 
-    def _rotate_y(self, theta):
-        return np.array([[np.cos(theta), 0, np.sin(theta), 0],
-                        [0,1,0,0],
-                        [-np.sin(theta), 0, np.cos(theta), 0],
-                        [0,0,0,1]])
+class DevCamera(Camera):
+    def __init__(self):
+        self.translation_matrix = np.identity(4)
+        self.xrot = np.identity(4)
+        self.yrot = np.identity(4)
+        self.zrot = np.identity(4)
 
-    def _rotate_z(self, theta):
-        return np.array([[np.cos(theta), -np.sin(theta), 0, 0],
-                        [np.sin(theta), np.cos(theta), 0, 0],
-                        [0,0,1,0],
-                        [0,0,0,1]])
+    def update(self, keyspressed, timedelta):
+        # Rotations about the origin
+        if keyspressed[pygame.K_i]:
+            self.xrot = self.xrot @ self._rotate_x(timedelta/1500)
+        if keyspressed[pygame.K_k]:
+            self.xrot = self.xrot @ self._rotate_x(-timedelta/1500)
+        if keyspressed[pygame.K_j]:
+            self.yrot = self.yrot @ self._rotate_y(timedelta/1500)
+        if keyspressed[pygame.K_l]:
+            self.yrot = self.yrot @ self._rotate_y(-timedelta/1500)
+        if keyspressed[pygame.K_u]:
+            self.zrot = self.zrot @ self._rotate_z(timedelta/1500)
+        if keyspressed[pygame.K_o]:
+            self.zrot = self.zrot @ self._rotate_z(-timedelta/1500)
+
+        # Translations towards or away from the origin
+        if keyspressed[pygame.K_w]:
+            self.translation_matrix += np.array([[0,0,0,0],[0,0,0,0],[0,0,0,timedelta/1500],[0,0,0,0]])
+        if keyspressed[pygame.K_s]:
+            self.translation_matrix += np.array([[0,0,0,0],[0,0,0,0],[0,0,0,-timedelta/1500],[0,0,0,0]])
+
+    def get_modelview(self):
+        return self.translation_matrix @ self.zrot @ self.yrot @ self.xrot

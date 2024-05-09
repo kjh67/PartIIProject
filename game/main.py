@@ -8,90 +8,28 @@ from threading import Thread, Event as ThreadEvent
 
 from renderer.gauss_renderer import GaussianRenderer
 from renderer.point_renderer import PointRenderer
-from game.player_camera import PlayerCamera
+from game.cameras import PlayerCamera, DevCamera
 
 
-def rotate_x(theta):
-    return np.array([[1,0,0,0],
-                    [0,np.cos(theta), -np.sin(theta), 0],
-                    [0, np.sin(theta), np.cos(theta), 0],
-                    [0,0,0,1]])
+def mainloop(filename, colmap_path=None, points=False, devcam=False, screensize=(800,600)):
 
-def rotate_y(theta):
-    return np.array([[np.cos(theta), 0, np.sin(theta), 0],
-                     [0,1,0,0],
-                    [-np.sin(theta), 0, np.cos(theta), 0],
-                    [0,0,0,1]])
-
-def rotate_z(theta):
-    return np.array([[np.cos(theta), -np.sin(theta), 0, 0],
-                    [np.sin(theta), np.cos(theta), 0, 0],
-                    [0,0,1,0],
-                    [0,0,0,1]])
-
-
-def mainloop_point(filename):
+    # Pygame and OpenGL canvas setup
     pygame.init()
     pygame.display.gl_set_attribute(GL_CONTEXT_FLAG_DEBUG_BIT_KHR, True)
-    # also adding the pygame.DOUBLEBUF flag breaks everything
-    pygame.display.set_mode((800,600), pygame.OPENGL)
-    pygame.display.set_caption("Splatting Point viewer")
-
-    # translate -5 in x
-    translation_matrix = np.array([[1,0,0,-3.81],[0,1,0,-0.357],[0,0,1,-3.99],[0,0,0,1]]).astype(np.float32)
-    renderer = PointRenderer(filename, 800, 600, translation_matrix)
-    renderer.render()
-    pygame.display.flip()
-    xrot = rotate_x(0)
-    yrot = rotate_y(0)
-    zrot = rotate_z(0)
-
-    while True:
-        rotation_matrix = np.matmul(zrot, np.matmul(yrot, xrot))
-        mv = np.matmul(translation_matrix, rotation_matrix)
-        renderer.update_modelview(mv)
-        renderer.render()
-        pygame.display.flip()
-        #pygame.time.wait(30)
-
-        keyspressed = pygame.key.get_pressed()
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_x):
-                pygame.quit()
-                quit()
-        if keyspressed[pygame.K_i]:
-            xrot = np.matmul(xrot, rotate_x(0.01))
-        if keyspressed[pygame.K_k]:
-            xrot = np.matmul(xrot, rotate_x(-0.01))
-        if keyspressed[pygame.K_j]:
-            yrot = np.matmul(yrot,rotate_y(0.01))
-        if keyspressed[pygame.K_l]:
-            yrot = np.matmul(yrot,rotate_y(-0.01))
-
-        # only rotations and moving camera to/away from 0,0
-        if keyspressed[pygame.K_w]:
-            translation_matrix += np.array([[0,0,0,0],[0,0,0,0],[0,0,0,0.01],[0,0,0,0]])
-        if keyspressed[pygame.K_s]:
-            translation_matrix += np.array([[0,0,0,0],[0,0,0,0],[0,0,0,-0.01],[0,0,0,0]])
-
-
-def mainloop_gauss(filename, colmap_path=None, points=False, screensize=(800,600)):
-
-    # pygame setup
-    pygame.init()
-    pygame.display.gl_set_attribute(GL_CONTEXT_FLAG_DEBUG_BIT_KHR, True)
-    # before was pygame.DOUBLEBUF|pygame.OPENGL
     pyg_screen = pygame.display.set_mode(screensize, pygame.OPENGL)
     pygame.display.set_caption("Splatting viewer")
 
-    # initialise fps display font
+    # Initialising FPS display font
     display_font = pygame.font.SysFont("", 25)
     display_fps = False
 
     # Instantiate player camera, which will handle all movement and model/view matrices
-    camera = PlayerCamera(colmap_path=colmap_path)
+    if devcam:
+        camera = DevCamera()
+    else:
+        camera = PlayerCamera(colmap_path=colmap_path)
 
-    # initialise renderer
+    # Initialise renderer
     if not points:
         renderer = GaussianRenderer(filename, *screensize)
     else:
@@ -106,11 +44,11 @@ def mainloop_gauss(filename, colmap_path=None, points=False, screensize=(800,600
             gaussians_updated.set()
     sorter = Thread(target=sorting_loop, args=[gaussians_updated], daemon=True)
 
-    # set up clock for movement and fps calculations
+    # Set up clock for movement and fps calculations
     fps_clock = pygame.time.Clock()
     fps_clock.tick()
 
-    # start the sorting thread before entering main game loop
+    # Start the sorting thread before entering main game loop
     sorter.start()
 
     while True:
@@ -119,13 +57,10 @@ def mainloop_gauss(filename, colmap_path=None, points=False, screensize=(800,600
             renderer.update_buffered_state()
             gaussians_updated.clear()
 
-        #global_rotation = np.linalg.inv(view_matrix)
-
-        #renderer.update_global_rotation(global_rotation[:3,:3])
         renderer.update_modelview(camera.get_modelview())
         renderer.render()
 
-        # Draw fps counter on the screen
+        # Draw FPS counter on the screen
         if display_fps:
             text_surface = display_font.render(f"{str(fps_clock.get_fps())[:5]}", False, (255,255,255,255), (0,0,0, 255))
             text_data = pygame.image.tostring(text_surface, "RGBA", True)
@@ -151,19 +86,16 @@ def mainloop_gauss(filename, colmap_path=None, points=False, screensize=(800,600
             elif (event.type == pygame.KEYDOWN and event.key == pygame.K_0):
                 renderer.save_frame("./TESTIMAGE.jpg")
 
-        # Update camera position etc with other user input
+        # Update camera model/view matrix using user input
         camera.update(keyspressed, t_delta)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('render_source', type=str, help="Path to .ply file containing splats")
-    parser.add_argument('-c', '--colmap_cams_path', type=str, help="Optional path to cameras.bin generated by COLMAP", default=None)
-    parser.add_argument('-p', '--points', action='store_true')
+    parser = argparse.ArgumentParser("Game allowing exploration of the scene ")
+    parser.add_argument('render_source', type=str, help="Path to .ply file containing gaussian splat model")
+    parser.add_argument('-c', '--colmap_cams_path', type=str, help="Optional path to cameras.bin generated by COLMAP; requied for correct movement behaviour", default=None)
+    parser.add_argument('-p', '--points', action='store_true', help="Render Gaussians as points rather than full splats")
+    parser.add_argument('--devcam', action='store_true', help="Activates development camera settings; camera movement will not be constrained to the street plane")
 
     args = parser.parse_args()
-
-    if args.points:
-        mainloop_point(args.render_source)
-    else:
-        mainloop_gauss(args.render_source, args.colmap_cams_path)
+    mainloop(args.render_source, args.colmap_cams_path, args.points, args.devcam)
