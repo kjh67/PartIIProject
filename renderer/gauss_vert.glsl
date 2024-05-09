@@ -147,14 +147,13 @@ vec3 colour_from_harmonics() {
 
 
 void main() {
-    vec4 camspace = view * vec4(center, 1);
     // OpenGL uses a right-handed rather than left-handed coordinate system; flip the z axis direction
-    vec4 pos2d = projection * mat4(-1,0,0,0,0,-1,0,0,0,0,1,0,0,0,0,1) * camspace;
-    
+    vec4 camspace = view * vec4(center, 1);
+    vec4 pos2d = projection * camspace;
     vec3 cov2D = compute_covariance_2D();
 
     float det_cov2D = cov2D.x*cov2D.z - cov2D.y*cov2D.y;
-    gauss_conic = vec3(cov2D.z, cov2D.y, cov2D.x) / det_cov2D;
+    gauss_conic = vec3(cov2D.z, -cov2D.y, cov2D.x) / det_cov2D;
 
     float mid = 0.5 * (cov2D.x + cov2D.z);
     float l1 = mid + sqrt(max(0.1,mid*mid - det_cov2D));
@@ -170,28 +169,3 @@ void main() {
 
     gl_Position = vec4(gauss_position, pos2d.z / pos2d.w, 1);
 }
-
-// void main() {
-//     vec4 camspace = view * vec4(center, 1);
-//     vec4 pos2d = projection * mat4(1,0,0,0,0,-1,0,0,0,0,1,0,0,0,0,1) * camspace;
-    
-//     vec3 cov2D = compute_covariance_2D(camspace);
-
-//     float det_cov2D = cov2D.x*cov2D.z - cov2D.y*cov2D.y;
-//     gauss_conic = vec3(cov2D.z, cov2D.y, cov2D.x) / det_cov2D;
-
-//     float mid = 0.5 * (cov2D.x + cov2D.z);
-//     float l1 = mid + sqrt(max(0.1,mid*mid - det_cov2D));
-//     float l2 = mid - sqrt(max(0.1,mid*mid - det_cov2D));
-//     vec2 v1 = 7 * sqrt(l1) * normalize(vec2(cov2D.y, l1 - cov2D.x));
-//     vec2 v2 = 7 * sqrt(l2) * normalize(vec2(cov2D.x - l1, cov2D.y));
-
-//     gauss_center = vec2(pos2d) / pos2d.w;
-//     vec2 gauss_position = vec2(gauss_center + position.x * (position.y < 0.0 ? v1 : v2) / viewport);
-
-//     gauss_colour = colour_from_harmonics();
-//     gauss_opacity = opacity;
-
-//     //gl_Position = vec4(center, 1);
-//     gl_Position = vec4(gauss_position, pos2d.z / pos2d.w, 1);
-// }

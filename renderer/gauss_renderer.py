@@ -20,7 +20,7 @@ class GaussianRenderer(Renderer):
     vshader = "./renderer/gauss_vert.glsl"
     fshader = "./renderer/gauss_frag.glsl"
     
-    def __init__(self, filepath, screenwidth, screenheight, mv_matrix, fovx=50, fovy=50, znear=0.2, zfar=200):
+    def __init__(self, filepath, screenwidth, screenheight, mv_matrix=np.identity(4), fovx=50, fovy=50, znear=0.2, zfar=200):
         tanfovx = np.tan(np.deg2rad(fovx/2))
         tanfovy = np.tan(np.deg2rad(fovy/2))
         super().__init__(filepath, screenwidth, screenheight, mv_matrix, tanfovx, tanfovy, znear, zfar)

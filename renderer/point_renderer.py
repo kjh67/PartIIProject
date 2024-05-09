@@ -19,7 +19,7 @@ class PointRenderer(Renderer):
     vshader = "./renderer/point_vert.glsl"
     fshader = "./renderer/point_frag.glsl"
     
-    def __init__(self, filepath, screenwidth, screenheight, mv_matrix, fovx=50, fovy=50, znear=0.2, zfar=200):
+    def __init__(self, filepath, screenwidth, screenheight, mv_matrix=np.identity(4), fovx=50, fovy=50, znear=0.2, zfar=200):
         tanfovx = np.tan(np.deg2rad(fovx/2))
         tanfovy = np.tan(np.deg2rad(fovy/2))
         super().__init__(filepath, screenwidth, screenheight, mv_matrix, tanfovx, tanfovy, znear, zfar)
@@ -32,7 +32,6 @@ class PointRenderer(Renderer):
         glEnable(GL_BLEND)
         glEnable(GL_POINT_SMOOTH)
         glEnable(GL_VERTEX_PROGRAM_POINT_SIZE)
-        glEnable(GL_DEPTH_TEST)
 
         # initialise vao
         self.vao = glGenVertexArrays(1)
@@ -60,7 +59,6 @@ class PointRenderer(Renderer):
         self.opacity_buffer = glGenBuffers(1)
         self.attribute_opacity = glGetAttribLocation(self.program, "vOpacity")
         glBindBuffer(GL_ARRAY_BUFFER, self.opacity_buffer)
-        print(self.gaussians.opacity)
         glBufferData(GL_ARRAY_BUFFER, self.gaussians.opacity.nbytes, self.gaussians.opacity, GL_STATIC_DRAW)
         glVertexAttribPointer(self.attribute_opacity, 1, GL_FLOAT, False, 0, None)
         glEnableVertexAttribArray(self.attribute_opacity)

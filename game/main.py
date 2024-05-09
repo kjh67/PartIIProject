@@ -5,12 +5,10 @@ import argparse
 from OpenGL.GL import glWindowPos2d, glDrawPixels
 from OpenGL.GL import GL_RGBA, GL_UNSIGNED_BYTE, GL_CONTEXT_FLAG_DEBUG_BIT_KHR
 from threading import Thread, Event as ThreadEvent
-from copy import deepcopy
 
 from renderer.gauss_renderer import GaussianRenderer
 from renderer.point_renderer import PointRenderer
 from game.player_camera import PlayerCamera
-from game.colmap_data_utils import generate_model_matrix
 
 
 def rotate_x(theta):
@@ -40,8 +38,7 @@ def mainloop_point(filename):
     pygame.display.set_caption("Splatting Point viewer")
 
     # translate -5 in x
-    translation_matrix = np.array([[1,0,0,0],[0,1,0,0],[0,0,1,-3],[0,0,0,1]]).astype(np.float32)
-
+    translation_matrix = np.array([[1,0,0,-3.81],[0,1,0,-0.357],[0,0,1,-3.99],[0,0,0,1]]).astype(np.float32)
     renderer = PointRenderer(filename, 800, 600, translation_matrix)
     renderer.render()
     pygame.display.flip()
@@ -55,7 +52,7 @@ def mainloop_point(filename):
         renderer.update_modelview(mv)
         renderer.render()
         pygame.display.flip()
-        pygame.time.wait(30)
+        #pygame.time.wait(30)
 
         keyspressed = pygame.key.get_pressed()
         for event in pygame.event.get():
@@ -63,23 +60,22 @@ def mainloop_point(filename):
                 pygame.quit()
                 quit()
         if keyspressed[pygame.K_i]:
-            xrot = np.matmul(xrot, rotate_x(0.1))
+            xrot = np.matmul(xrot, rotate_x(0.01))
         if keyspressed[pygame.K_k]:
-            xrot = np.matmul(xrot, rotate_x(-0.1))
+            xrot = np.matmul(xrot, rotate_x(-0.01))
         if keyspressed[pygame.K_j]:
-            yrot = np.matmul(yrot,rotate_y(0.1))
+            yrot = np.matmul(yrot,rotate_y(0.01))
         if keyspressed[pygame.K_l]:
-            yrot = np.matmul(yrot,rotate_y(-0.1))
+            yrot = np.matmul(yrot,rotate_y(-0.01))
 
         # only rotations and moving camera to/away from 0,0
         if keyspressed[pygame.K_w]:
-            translation_matrix += np.array([[0,0,0,0],[0,0,0,0],[0,0,0,0.1],[0,0,0,0]])
+            translation_matrix += np.array([[0,0,0,0],[0,0,0,0],[0,0,0,0.01],[0,0,0,0]])
         if keyspressed[pygame.K_s]:
-            translation_matrix += np.array([[0,0,0,0],[0,0,0,0],[0,0,0,-0.1],[0,0,0,0]])
+            translation_matrix += np.array([[0,0,0,0],[0,0,0,0],[0,0,0,-0.01],[0,0,0,0]])
 
 
-def mainloop_gauss(filename, colmap_path=None, points=False):
-    screensize = (800, 600)
+def mainloop_gauss(filename, colmap_path=None, points=False, screensize=(800,600)):
 
     # pygame setup
     pygame.init()
@@ -92,21 +88,14 @@ def mainloop_gauss(filename, colmap_path=None, points=False):
     display_font = pygame.font.SysFont("", 25)
     display_fps = False
 
-    # attempt to generate model matrix from COLMAP data
-    if colmap_path:
-        try:
-            model_matrix = generate_model_matrix(colmap_path)
-        except FileExistsError:
-            model_matrix = np.identity(4)
-    else:
-        model_matrix = np.identity(4)
-    #model_matrix = np.identity(4)
+    # Instantiate player camera, which will handle all movement and model/view matrices
+    camera = PlayerCamera(colmap_path=colmap_path)
 
     # initialise renderer
     if not points:
-        renderer = GaussianRenderer(filename, *screensize, model_matrix)
+        renderer = GaussianRenderer(filename, *screensize)
     else:
-        renderer = PointRenderer(filename, *screensize, model_matrix)
+        renderer = PointRenderer(filename, *screensize)
 
     # set up gaussian sorting in the background - use event to signal to the main loop when a sort has been completed
     gaussians_updated = ThreadEvent()
@@ -120,9 +109,6 @@ def mainloop_gauss(filename, colmap_path=None, points=False):
     # set up clock for movement and fps calculations
     fps_clock = pygame.time.Clock()
     fps_clock.tick()
-
-    # Instantiate player camera, which will handle all movement and model/view matrices
-    camera = PlayerCamera(model_matrix)
 
     # start the sorting thread before entering main game loop
     sorter.start()
