@@ -85,10 +85,6 @@ class PointRenderer(Renderer):
         self.mvp = np.matmul(proj_matrix, self.modelview_matrix)
         glUniformMatrix4fv(self.mvp_uniloc, 1, GL_TRUE, self.mvp)
 
-    def update_gaussian_rotation(self, gauss_rotation):
-        # Pass this method, since gaussians are points their rotation is irrelevant
-        pass
-
     def sort_gaussians(self):
         pass
 

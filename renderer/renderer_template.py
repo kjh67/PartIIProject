@@ -116,10 +116,6 @@ class Renderer(ABC):
         pass
 
     @abstractmethod
-    def update_gaussian_rotation(self, gauss_rotation):
-        pass
-
-    @abstractmethod
     def update_buffered_state(self):
         pass
 

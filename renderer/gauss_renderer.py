@@ -5,8 +5,8 @@ from OpenGL.GL import glUseProgram, glDisable, glEnable, glBlendFunc,\
     glGenBuffers, glGetAttribLocation, glBindBuffer, glBufferData,\
     glVertexAttribPointer, glEnableVertexAttribArray, glGenVertexArrays,\
     glBindVertexArray, glVertexAttribDivisor, glGetUniformLocation,\
-    glUniformMatrix4fv, glUniform2fv, glUniformMatrix3fv, glClearColor,\
-    glClear, glDrawArraysInstanced
+    glUniformMatrix4fv, glUniform2fv, glClearColor, glClear,\
+    glDrawArraysInstanced
 # OpenGL enums
 from OpenGL.GL import GL_DEPTH_TEST, GL_BLEND, GL_SRC_ALPHA,\
     GL_ONE_MINUS_SRC_ALPHA, GL_ARRAY_BUFFER, GL_FLOAT,\
@@ -111,10 +111,6 @@ class GaussianRenderer(Renderer):
         self.uniform_viewport = glGetUniformLocation(self.program, "viewport")
         glUniform2fv(self.uniform_viewport, 1, np.array([screenwidth, screenheight]).astype(np.float32))
 
-        # NEW: GLOBAL ROTATION
-        self.uniform_globalrotation = glGetUniformLocation(self.program, "global_rotation")
-        glUniformMatrix3fv(self.uniform_globalrotation, 1, True, np.identity(3))
-
 
     def sort_gaussians(self):
         xyz = np.asarray(self.gaussians.position)
@@ -157,11 +153,6 @@ class GaussianRenderer(Renderer):
         glBindVertexArray(self.vao)
         self.modelview_matrix = mv_matrix
         glUniformMatrix4fv(self.uniform_view, 1, GL_TRUE, mv_matrix)
-
-    def update_gaussian_rotation(self, global_rotation):
-        glUseProgram(self.program)
-        glBindVertexArray(self.vao)
-        glUniformMatrix3fv(self.uniform_globalrotation, 1, True, global_rotation)
 
 
     def render(self):

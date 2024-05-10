@@ -18,7 +18,6 @@ uniform vec2 tanfovxy;
 uniform vec2 focal;
 uniform vec2 viewport;
 
-uniform mat3 global_rotation;
 
 // Outputs to the fragment shader, per vertex
 out vec2 gauss_center;
@@ -58,14 +57,11 @@ mat3 compute_covariance_3D() {
     float q2 = norm_rot.z;
     float q3 = norm_rot.w;
     // R calculated using formula from wikipedia
-    mat3 R_0 = mat3(
+    mat3 R = mat3(
         1 - 2*(q2*q2 + q3*q3), 2*(q1*q2 - q0*q3), 2*(q1*q3 + q0*q2),
         2*(q1*q2 + q0*q3), 1 - 2*(q1*q1 + q3*q3), 2*(q2*q3 - q0*q1),
         2*(q1*q3 - q0*q2), 2*(q2*q3 + q0*q1), 1 - 2*(q1*q1 + q2*q2)
     );
-
-    // ADJUST GAUSSIAN ROTATION ACCORDING TO MODEL ROTATION
-    mat3 R = global_rotation * R_0;
 
     // sigma calculated using equation given in paper
     mat3 sigma = transpose(R) * transpose(S) * S * R;
