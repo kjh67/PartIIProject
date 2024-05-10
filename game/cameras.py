@@ -140,4 +140,4 @@ class DevCamera(Camera):
             self.translation_matrix += np.array([[0,0,0,0],[0,0,0,0],[0,0,0,-timedelta/1500],[0,0,0,0]])
 
     def get_modelview(self):
-        return self.translation_matrix @ self.zrot @ self.yrot @ self.xrot
+        return self.translation_matrix @ self.zrot @ self.yrot @ self.xrot @ np.array([[-1,0,0,0],[0,-1,0,0],[0,0,1,0],[0,0,0,1]])
