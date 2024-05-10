@@ -163,5 +163,6 @@ renderer/gauss360*
 game/gauss360*
 colmap/build
 *.jpg
+*test*
 
 .VSCodeCounter*
