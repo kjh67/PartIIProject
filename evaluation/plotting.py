@@ -11,6 +11,9 @@ def plot_violin(data, data_labels, y_label, output_file):
     fig.set_size_inches(2*len(data_labels), 1.2*len(data_labels))
     tick_positions = np.arange(len(data))
     violins = ax.violinplot(data, tick_positions, showmedians=True, showextrema=True)
+    for dataset in data:
+        print(f"MEAN: {np.mean(dataset)}")
+        print(f"MEDIAN: {np.median(dataset)}")
 
     # Format axis labels
     ax.set_ylabel(y_label)
